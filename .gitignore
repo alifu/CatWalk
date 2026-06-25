@@ -1,0 +1,86 @@
+.DS_Store
+/.build
+/Packages
+.swiftpm/configuration/registries.json
+.swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+.netrc
+
+# Xcode
+
+.DS_Store
+*.swp
+*.lock
+*~.nib
+
+# User-specific Xcode data
+
+xcuserdata/
+*.xcuserstate
+
+# Build products
+
+build/
+Build/
+DerivedData/
+
+# Swift Package Manager
+
+.swiftpm/
+.build/
+
+# Package resolved files
+
+Package.resolved
+
+# Xcode package artifacts
+
+SourcePackages/
+
+# Playground
+
+timeline.xctimeline
+playground.xcworkspace
+
+# Fastlane
+
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# Code coverage
+
+*.xccovreport
+*.xccovarchive
+
+# Archives
+
+*.xcarchive
+
+# Documentation
+
+docs/.build/
+
+# Firebase
+
+GoogleService-Info.plist
+
+# Secrets
+
+.env
+.env.*
+*.key
+*.p12
+*.mobileprovision
+
+# Cursor
+
+.cursor/
+
+# VSCode
+
+.vscode/
+
+# JetBrains
+
+.idea/

@@ -7,11 +7,18 @@
 
 import Foundation
 
-class MainViewModel: ObservableObject {
+@MainActor
+final class MainViewModel: ObservableObject {
 
-    @Published private(set) var logs: [APILogModel] = []
+    @Published private(set) var transactions: [CWTransaction] = []
 
-    @MainActor func reload() {
-        logs = SecureFileStorage.shared.fetchAllLogs()
+    private let store: CWTransactionStore
+
+    init(store: CWTransactionStore = CWCaptureEngine.shared.store) {
+        self.store = store
+    }
+
+    func reload() {
+        transactions = store.snapshot()
     }
 }

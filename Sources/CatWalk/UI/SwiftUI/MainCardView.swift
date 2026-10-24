@@ -8,16 +8,16 @@
 import SwiftUI
 
 struct MainCardView: View {
-    let log: APILogModel
+    let transaction: CWTransaction
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(log.url).font(.body)
-            if let code = log.statusCode {
+            Text(transaction.request.url.absoluteString).font(.body)
+            if let code = transaction.response?.statusCode {
                 Text("Status: \(code)")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-            Text(log.method)
+            Text(transaction.request.method)
                 .font(.caption2)
                 .foregroundColor(.gray)
         }
@@ -29,12 +29,8 @@ struct MainCardView: View {
 }
 
 #Preview {
-    MainCardView(log: APILogModel(
-        id: UUID(),
-        url: "https://example.com",
-        method: "GET",
-        requestHeaders: [:],
-        requestBody: nil,
-        startTime: Date()
-    ))
+    MainCardView(transaction: CWRecorder(configuration: .default).begin(
+        URLRequest(url: URL(string: "https://example.com")!),
+        body: nil
+    )!)
 }

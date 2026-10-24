@@ -12,7 +12,7 @@ import CatWalk
 struct DemoSwiftUIApp: App {
     
     init() {
-        CWAPILogger.start()
+        CatWalk.start()
     }
     
     var body: some Scene {

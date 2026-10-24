@@ -32,8 +32,8 @@ struct MainView: View {
             }
             .frame(maxWidth: .infinity, minHeight: 60)
             
-            List(viewModel.logs, id: \.id) { log in
-                MainCardView(log: log)
+            List(viewModel.transactions) { transaction in
+                MainCardView(transaction: transaction)
                     .listRowBackground(Color.clear)
             }
             .listStyle(.plain)

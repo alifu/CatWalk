@@ -6,9 +6,15 @@
 //
 
 import SwiftUI
+import CatWalk
 
 @main
 struct DemoSwiftUIApp: App {
+    
+    init() {
+        CWAPILogger.start()
+    }
+    
     var body: some Scene {
         WindowGroup {
             ContentView()

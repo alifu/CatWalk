@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  StubURLProtocol.swift
 //  CatWalk
@@ -149,3 +150,4 @@ final class StubTrustProtectionSpace: URLProtectionSpace, @unchecked Sendable {
 
     override var serverTrust: SecTrust? { trust }
 }
+#endif

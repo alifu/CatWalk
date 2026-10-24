@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWShareSheet.swift
 //  CatWalk
@@ -33,3 +34,4 @@ struct CWShareItem: Identifiable {
         return CWShareItem(items: [url])
     }
 }
+#endif

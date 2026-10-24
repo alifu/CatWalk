@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWDetailView.swift
 //  CatWalk
@@ -252,3 +253,4 @@ private struct CWCertificateView: View {
         }
     }
 }
+#endif

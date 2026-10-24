@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWMockStoreTests.swift
 //  CatWalk
@@ -137,3 +138,4 @@ struct CWMockStoreTests {
         #expect(full.response.error == .timedOut)
     }
 }
+#endif

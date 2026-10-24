@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWBodyView.swift
 //  CatWalk
@@ -85,3 +86,4 @@ struct CWBodyView: View {
         }
     }
 }
+#endif

@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWStoreChange.swift
 //  CatWalk
@@ -12,3 +13,4 @@ enum CWStoreChange: Sendable, Equatable {
     case trimmed
     case cleared
 }
+#endif

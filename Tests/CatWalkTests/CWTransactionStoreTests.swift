@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWTransactionStoreTests.swift
 //  CatWalk
@@ -153,3 +154,4 @@ struct CWTransactionStoreTests {
         cancellable.cancel()
     }
 }
+#endif

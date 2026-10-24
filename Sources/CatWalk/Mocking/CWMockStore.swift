@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWMockStore.swift
 //  CatWalk
@@ -152,3 +153,4 @@ private extension CWMockStore.Entry {
         }
     }
 }
+#endif

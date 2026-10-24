@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWCertificateTests.swift
 //  CatWalk
@@ -169,3 +170,4 @@ struct CWCertificateCacheTests {
         #expect(CWCertificateCache.key(for: try #require(URL(string: "https://a.test:8443"))) == "a.test:8443")
     }
 }
+#endif

@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  MainView.swift
 //  CatWalk
@@ -118,4 +119,5 @@ struct MainView: View {
 #Preview {
     MainView(onDismiss: {})
 }
+#endif
 #endif

@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWBodyReader.swift
 //  CatWalk
@@ -44,3 +45,4 @@ enum CWBodyReader {
         }
     }
 }
+#endif

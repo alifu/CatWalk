@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWBodyPreview.swift
 //  CatWalk
@@ -56,3 +57,4 @@ enum CWBodyPreview: Equatable {
             .joined()
     }
 }
+#endif

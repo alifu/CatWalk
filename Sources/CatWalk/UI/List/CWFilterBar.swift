@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWFilterBar.swift
 //  CatWalk
@@ -50,3 +51,4 @@ struct CWFilterBar: View {
         }
     }
 }
+#endif

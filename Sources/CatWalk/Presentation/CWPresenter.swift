@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWPresenter.swift
 //  CatWalk
@@ -97,7 +98,7 @@ final class CWHostingController: UIHostingController<MainView> {
     init(onDisappear: @escaping () -> Void = {}) {
         self.onDisappear = onDisappear
         let box = DismissBox()
-        super.init(rootView: MainView(onDismiss: { box.dismiss() }))
+        super.init(rootView: MainView(onDismiss: { MainActor.assumeIsolated { box.dismiss() } }))
         box.controller = self
         modalPresentationStyle = .pageSheet
     }
@@ -115,6 +116,7 @@ final class CWHostingController: UIHostingController<MainView> {
     }
 
     /// Lets the close button reach the controller that is created after the view.
+    @MainActor
     private final class DismissBox {
         weak var controller: UIViewController?
 
@@ -128,3 +130,4 @@ final class CWHostingController: UIHostingController<MainView> {
         }
     }
 }
+#endif

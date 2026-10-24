@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWFormat.swift
 //  CatWalk
@@ -16,3 +17,4 @@ enum CWFormat {
         seconds < 1 ? "\(Int((seconds * 1000).rounded())) ms" : String(format: "%.2f s", seconds)
     }
 }
+#endif

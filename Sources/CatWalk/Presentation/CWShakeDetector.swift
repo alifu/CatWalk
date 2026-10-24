@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWShakeDetector.swift
 //  CatWalk
@@ -36,3 +37,4 @@ enum CWShakeDetector {
         _ = installation
     }
 }
+#endif

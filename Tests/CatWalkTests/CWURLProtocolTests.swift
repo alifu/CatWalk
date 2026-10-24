@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWURLProtocolTests.swift
 //  CatWalk
@@ -396,3 +397,4 @@ final class PinningDelegate: NSObject, URLSessionTaskDelegate, @unchecked Sendab
         completionHandler(.useCredential, URLCredential(trust: trust))
     }
 }
+#endif

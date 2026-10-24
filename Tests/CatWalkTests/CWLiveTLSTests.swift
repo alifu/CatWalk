@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWLiveTLSTests.swift
 //  CatWalk
@@ -101,3 +102,4 @@ final class SPKIPinningDelegate: NSObject, URLSessionTaskDelegate, @unchecked Se
         }
     }
 }
+#endif

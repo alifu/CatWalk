@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWListViewModelTests.swift
 //  CatWalk
@@ -43,3 +44,4 @@ struct CWListViewModelTests {
         #expect(await waitUntil { viewModel.transactions.isEmpty && viewModel.totalCount == 0 })
     }
 }
+#endif

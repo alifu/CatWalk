@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWMockListView.swift
 //  CatWalk
@@ -64,3 +65,4 @@ struct CWMockListView: View {
         rules = CatWalk.mocks
     }
 }
+#endif

@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWTransactionStore.swift
 //  CatWalk
@@ -12,8 +13,8 @@ import Foundation
 /// captured body bytes (`CWMemoryBudget`).
 final class CWTransactionStore: @unchecked Sendable {
 
-    static let defaultCapacity = 500
-    static let defaultMaxTotalBodyBytes = 50 * 1024 * 1024
+    static let defaultCapacity = CWConfiguration.defaultMaxTransactions
+    static let defaultMaxTotalBodyBytes = CWConfiguration.defaultMaxTotalBodyBytes
 
     fileprivate struct Storage {
         var ring: CWRingBuffer<CWTransaction>
@@ -155,3 +156,4 @@ private extension CWTransactionStore {
         storage.budget.remove(transaction.storedBodyBytes)
     }
 }
+#endif

@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWHTTPRequest+Replay.swift
 //  CatWalk
@@ -21,3 +22,4 @@ extension CWHTTPRequest {
         return request
     }
 }
+#endif

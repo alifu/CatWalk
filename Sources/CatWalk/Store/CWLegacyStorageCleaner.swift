@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWLegacyStorageCleaner.swift
 //  CatWalk
@@ -44,3 +45,4 @@ enum CWLegacyStorageCleaner {
         }
     }()
 }
+#endif

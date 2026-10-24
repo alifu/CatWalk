@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWExportTests.swift
 //  CatWalk
@@ -81,3 +82,4 @@ struct CWExportTests {
         #expect(truncated.replayRequest.httpBody == nil)
     }
 }
+#endif

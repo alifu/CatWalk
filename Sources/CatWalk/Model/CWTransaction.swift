@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWTransaction.swift
 //  CatWalk
@@ -190,3 +191,4 @@ private extension CWTransaction {
         return "\(request.method) \(request.url.absoluteString) \(status)".lowercased()
     }
 }
+#endif

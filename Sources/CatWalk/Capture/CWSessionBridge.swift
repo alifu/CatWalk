@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWSessionBridge.swift
 //  CatWalk
@@ -141,3 +142,4 @@ private final class CWSessionDelegate: NSObject, URLSessionDataDelegate, Sendabl
         client?.bridgeDidComplete(with: error)
     }
 }
+#endif

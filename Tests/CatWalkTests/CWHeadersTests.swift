@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWHeadersTests.swift
 //  CatWalk
@@ -44,3 +45,4 @@ struct CWHeadersTests {
         #expect(headers.entries.isEmpty)
     }
 }
+#endif

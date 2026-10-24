@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWSessionConfigurationSwizzle.swift
 //  CatWalk
@@ -58,3 +59,4 @@ extension URLSessionConfiguration {
         return self
     }
 }
+#endif

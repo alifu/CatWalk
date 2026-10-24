@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWDERReader.swift
 //  CatWalk
@@ -104,3 +105,4 @@ struct CWDERReader: Sendable {
         return length
     }
 }
+#endif

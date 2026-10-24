@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWBodyTests.swift
 //  CatWalk
@@ -56,3 +57,4 @@ struct CWBodyTests {
         #expect(accumulator.body == nil)
     }
 }
+#endif

@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWCookieParserTests.swift
 //  CatWalk
@@ -67,3 +68,4 @@ struct CWCookieParserTests {
         #expect(cookie?.isHTTPOnly == true)
     }
 }
+#endif

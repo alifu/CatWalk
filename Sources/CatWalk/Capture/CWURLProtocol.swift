@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWURLProtocol.swift
 //  CatWalk
@@ -267,7 +268,7 @@ private extension CWURLProtocol {
             state.recorder = recorder
             state.transaction = transaction
         }
-        let finish = { [self] in finishMock(rule.response, recorder: recorder, transaction: transaction) }
+        let finish: @Sendable () -> Void = { [self] in finishMock(rule.response, recorder: recorder, transaction: transaction) }
 
         if rule.response.delay > 0 {
             DispatchQueue.global().asyncAfter(deadline: .now() + rule.response.delay, execute: finish)
@@ -376,3 +377,4 @@ private extension CWURLProtocol {
         return mutable as URLRequest
     }
 }
+#endif

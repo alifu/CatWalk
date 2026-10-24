@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWDistinguishedName.swift
 //  CatWalk
@@ -66,3 +67,4 @@ enum CWDistinguishedName {
         return decoded
     }
 }
+#endif

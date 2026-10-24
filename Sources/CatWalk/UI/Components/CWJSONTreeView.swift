@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWJSONTreeView.swift
 //  CatWalk
@@ -94,3 +95,4 @@ private struct CWJSONNodeView: View {
         }
     }
 }
+#endif

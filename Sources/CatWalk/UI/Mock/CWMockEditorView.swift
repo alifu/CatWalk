@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWMockEditorView.swift
 //  CatWalk
@@ -73,3 +74,4 @@ struct CWMockEditorView: View {
         }
     }
 }
+#endif

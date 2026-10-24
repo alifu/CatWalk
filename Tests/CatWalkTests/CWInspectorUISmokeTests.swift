@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWInspectorUISmokeTests.swift
 //  CatWalk
@@ -45,3 +46,4 @@ struct CWInspectorUISmokeTests {
         layOut(NavigationView { CWSettingsView(store: store) })
     }
 }
+#endif

@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWHTTPRequest.swift
 //  CatWalk
@@ -36,3 +37,4 @@ public struct CWHTTPRequest: Sendable, Equatable {
         CWHTTPRequest(method: method, url: url, headers: headers, body: body?.strippingData())
     }
 }
+#endif

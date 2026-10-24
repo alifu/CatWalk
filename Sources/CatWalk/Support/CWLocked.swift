@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWLocked.swift
 //  CatWalk
@@ -25,3 +26,4 @@ final class CWLocked<Value>: @unchecked Sendable {
         return try body(&value)
     }
 }
+#endif

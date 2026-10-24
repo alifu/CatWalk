@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWPreviewFixtures.swift
 //  CatWalk
@@ -62,4 +63,5 @@ enum CWPreviewFixtures {
         .preferredColorScheme(.dark)
         .environment(\.sizeCategory, .accessibilityLarge)
 }
+#endif
 #endif

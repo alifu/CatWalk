@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWX509Parser.swift
 //  CatWalk
@@ -61,3 +62,4 @@ enum CWHex {
         bytes.map { String(format: "%02X", $0) }.joined(separator: ":")
     }
 }
+#endif

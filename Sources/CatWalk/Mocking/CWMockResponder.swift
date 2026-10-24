@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWMockResponder.swift
 //  CatWalk
@@ -13,3 +14,4 @@ enum CWMockResponder {
         return HTTPURLResponse(url: url, statusCode: response.status, httpVersion: "HTTP/1.1", headerFields: headers)
     }
 }
+#endif

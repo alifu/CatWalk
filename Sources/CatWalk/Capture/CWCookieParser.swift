@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWCookieParser.swift
 //  CatWalk
@@ -44,3 +45,4 @@ enum CWCookieParser {
             .map(CWCookie.init)
     }
 }
+#endif

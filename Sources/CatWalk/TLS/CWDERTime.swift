@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWDERTime.swift
 //  CatWalk
@@ -63,3 +64,4 @@ enum CWDERTime {
 private extension Character {
     var isASCIIDigit: Bool { isASCII && isNumber }
 }
+#endif

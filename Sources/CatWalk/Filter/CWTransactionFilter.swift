@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWTransactionFilter.swift
 //  CatWalk
@@ -80,3 +81,4 @@ struct CWTransactionFilter: Equatable, Sendable {
         Set(transactions.compactMap { $0.request.url.host?.lowercased() }).sorted()
     }
 }
+#endif

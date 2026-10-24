@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWJSONNode.swift
 //  CatWalk
@@ -62,3 +63,4 @@ indirect enum CWJSONNode: Equatable, Sendable {
         }
     }
 }
+#endif

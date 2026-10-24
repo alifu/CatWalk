@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWTransactionError.swift
 //  CatWalk
@@ -21,3 +22,4 @@ public struct CWTransactionError: Sendable, Equatable {
         self.message = nsError.localizedDescription
     }
 }
+#endif

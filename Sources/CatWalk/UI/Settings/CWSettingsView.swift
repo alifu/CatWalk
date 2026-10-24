@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWSettingsView.swift
 //  CatWalk
@@ -70,3 +71,4 @@ struct CWSettingsView: View {
         }
     }
 }
+#endif

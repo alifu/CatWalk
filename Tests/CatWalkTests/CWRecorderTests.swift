@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWRecorderTests.swift
 //  CatWalk
@@ -119,3 +120,4 @@ struct CWRecorderTests {
         #expect(done.searchKey.contains("404"))
     }
 }
+#endif

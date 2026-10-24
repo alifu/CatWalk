@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWHTTPResponse.swift
 //  CatWalk
@@ -36,3 +37,4 @@ public struct CWHTTPResponse: Sendable, Equatable {
         CWHTTPResponse(statusCode: statusCode, headers: headers, body: body?.strippingData(), mimeType: mimeType)
     }
 }
+#endif

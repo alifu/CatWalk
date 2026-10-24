@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWCurlExporter.swift
 //  CatWalk
@@ -34,3 +35,4 @@ enum CWCurlExporter {
         "'" + text.replacingOccurrences(of: "'", with: "'\\''") + "'"
     }
 }
+#endif

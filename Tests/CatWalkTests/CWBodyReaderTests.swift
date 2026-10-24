@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWBodyReaderTests.swift
 //  CatWalk
@@ -40,3 +41,4 @@ struct CWBodyReaderTests {
         #expect(body == nil)
     }
 }
+#endif

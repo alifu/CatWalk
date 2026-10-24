@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWCaptureEngine.swift
 //  CatWalk
@@ -144,3 +145,4 @@ final class CWCaptureEngine: Sendable {
         #endif
     }
 }
+#endif

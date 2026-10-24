@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWConnectionMetrics.swift
 //  CatWalk
@@ -30,3 +31,4 @@ extension CWConnectionMetrics {
         )
     }
 }
+#endif

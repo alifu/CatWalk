@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWKeyValueRow.swift
 //  CatWalk
@@ -25,3 +26,4 @@ struct CWKeyValueRow: View {
         .accessibilityElement(children: .combine)
     }
 }
+#endif

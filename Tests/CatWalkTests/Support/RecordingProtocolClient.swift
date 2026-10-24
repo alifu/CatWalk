@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  RecordingProtocolClient.swift
 //  CatWalk
@@ -58,3 +59,4 @@ final class StubChallengeSender: NSObject, URLAuthenticationChallengeSender, @un
     func continueWithoutCredential(for challenge: URLAuthenticationChallenge) {}
     func cancel(_ challenge: URLAuthenticationChallenge) {}
 }
+#endif

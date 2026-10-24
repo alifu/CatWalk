@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWCookie.swift
 //  CatWalk
@@ -74,3 +75,4 @@ public struct CWCookie: Sendable, Hashable {
         )
     }
 }
+#endif

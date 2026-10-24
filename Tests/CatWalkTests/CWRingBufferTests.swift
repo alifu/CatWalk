@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWRingBufferTests.swift
 //  CatWalk
@@ -59,3 +60,4 @@ struct CWRingBufferTests {
         #expect(CWRingBuffer<Int>(capacity: 0).capacity == 1)
     }
 }
+#endif

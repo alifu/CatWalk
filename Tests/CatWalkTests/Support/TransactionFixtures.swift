@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  TransactionFixtures.swift
 //  CatWalk
@@ -37,3 +38,4 @@ enum TransactionFixtures {
         )
     }
 }
+#endif

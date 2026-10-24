@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWListViewModel.swift
 //  CatWalk
@@ -78,3 +79,4 @@ final class CWListViewModel: ObservableObject {
         if filter.host == host { filter.host = nil }
     }
 }
+#endif

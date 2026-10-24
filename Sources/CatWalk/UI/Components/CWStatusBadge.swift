@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWStatusBadge.swift
 //  CatWalk
@@ -62,3 +63,4 @@ struct CWChip: View {
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
+#endif

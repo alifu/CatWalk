@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWRedaction.swift
 //  CatWalk
@@ -9,3 +10,4 @@ public enum CWRedaction {
     /// Replaces the value of a redacted header or cookie.
     public static let placeholder = "<redacted>"
 }
+#endif

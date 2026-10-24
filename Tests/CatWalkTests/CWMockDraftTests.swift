@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWMockDraftTests.swift
 //  CatWalk
@@ -59,3 +60,4 @@ struct CWMockDraftTests {
         #expect(throws: CWMockDraft.ValidationError.invalidHeader("no colon here")) { try draft.rule() }
     }
 }
+#endif

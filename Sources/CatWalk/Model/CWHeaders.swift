@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWHeaders.swift
 //  CatWalk
@@ -60,3 +61,4 @@ public struct CWHeaders: Sendable, Equatable {
         return CWHeaders(entries: redacted)
     }
 }
+#endif

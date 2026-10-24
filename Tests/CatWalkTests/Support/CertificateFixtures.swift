@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CertificateFixtures.swift
 //  CatWalk
@@ -31,3 +32,4 @@ enum CertificateFixtures {
         return trust!
     }
 }
+#endif

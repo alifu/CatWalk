@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWCaptureError.swift
 //  CatWalk
@@ -26,3 +27,4 @@ enum CWCaptureError: LocalizedError {
         }
     }
 }
+#endif

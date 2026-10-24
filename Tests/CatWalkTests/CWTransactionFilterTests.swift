@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWTransactionFilterTests.swift
 //  CatWalk
@@ -83,3 +84,4 @@ private extension CWTransactionFilter {
         self.hiddenIDs = hiddenIDs
     }
 }
+#endif

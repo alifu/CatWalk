@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWRingBuffer.swift
 //  CatWalk
@@ -76,3 +77,4 @@ struct CWRingBuffer<Element> {
         sequence >= firstSequence && sequence < nextSequence
     }
 }
+#endif

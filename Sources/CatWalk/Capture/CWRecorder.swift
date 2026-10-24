@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWRecorder.swift
 //  CatWalk
@@ -108,3 +109,4 @@ private extension CWRecorder {
         )
     }
 }
+#endif

@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWHostFilterTests.swift
 //  CatWalk
@@ -94,3 +95,4 @@ struct CWHostFilterTests {
         #expect(!CWHostFilter.empty.isIgnored("a.com"))
     }
 }
+#endif

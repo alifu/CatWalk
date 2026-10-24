@@ -12,9 +12,9 @@ public struct CWConfiguration: Sendable {
 
     public static let defaultMaxBodyBytes = 1024 * 1024
 
-    public static let defaultMaxTransactions = CWTransactionStore.defaultCapacity
+    public static let defaultMaxTransactions = 500
 
-    public static let defaultMaxTotalBodyBytes = CWTransactionStore.defaultMaxTotalBodyBytes
+    public static let defaultMaxTotalBodyBytes = 50 * 1024 * 1024
 
     public static let defaultRedactedHeaders: Set<String> = ["Authorization", "Proxy-Authorization"]
 
@@ -42,6 +42,9 @@ public struct CWConfiguration: Sendable {
     /// What opens the inspector. Default: shake. Use `[]` to open it only from your own code.
     public var triggers: CWTrigger
 
+    /// `false` turns CatWalk off without removing it: `start` does nothing. Feed it from a remote flag.
+    public var isEnabled: Bool
+
     public init(
         maxBodyBytes: Int = CWConfiguration.defaultMaxBodyBytes,
         redactedHeaders: Set<String> = CWConfiguration.defaultRedactedHeaders,
@@ -49,13 +52,15 @@ public struct CWConfiguration: Sendable {
         maxTransactions: Int = CWConfiguration.defaultMaxTransactions,
         maxTotalBodyBytes: Int = CWConfiguration.defaultMaxTotalBodyBytes,
         ignoredHosts: [String] = [],
-        triggers: CWTrigger = [.shake]
+        triggers: CWTrigger = [.shake],
+        isEnabled: Bool = true
     ) {
         self.maxBodyBytes = max(0, maxBodyBytes)
         self.maxTransactions = max(1, maxTransactions)
         self.maxTotalBodyBytes = max(0, maxTotalBodyBytes)
         self.ignoredHosts = ignoredHosts
         self.triggers = triggers
+        self.isEnabled = isEnabled
         self.redactedHeaders = redactedHeaders
         self.interceptCustomSessions = interceptCustomSessions
     }

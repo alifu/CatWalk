@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWPresentationTests.swift
 //  CatWalk
@@ -66,3 +67,4 @@ struct CWPresentationTests {
         #expect(CatWalk.makeViewController() is CWHostingController)
     }
 }
+#endif

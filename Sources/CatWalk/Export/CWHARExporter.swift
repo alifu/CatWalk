@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWHARExporter.swift
 //  CatWalk
@@ -85,3 +86,4 @@ enum CWHARExporter {
         return content
     }
 }
+#endif

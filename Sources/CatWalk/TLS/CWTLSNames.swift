@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWTLSNames.swift
 //  CatWalk
@@ -61,3 +62,4 @@ private extension String {
         String(repeating: "0", count: max(0, length - count)) + self
     }
 }
+#endif

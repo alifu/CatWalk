@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWMockDraft.swift
 //  CatWalk
@@ -118,3 +119,4 @@ struct CWMockDraftItem: Identifiable {
         self.draft = draft
     }
 }
+#endif

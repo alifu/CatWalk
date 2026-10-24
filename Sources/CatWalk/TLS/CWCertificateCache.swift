@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWCertificateCache.swift
 //  CatWalk
@@ -46,3 +47,4 @@ final class CWCertificateCache: Sendable {
         chains.withLock { $0.removeAll() }
     }
 }
+#endif

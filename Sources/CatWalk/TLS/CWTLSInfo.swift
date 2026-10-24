@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWTLSInfo.swift
 //  CatWalk
@@ -69,3 +70,4 @@ public struct CWTLSInfo: Sendable, Equatable {
         self.trustDecision = trustDecision
     }
 }
+#endif

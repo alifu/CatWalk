@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWTransactionRow.swift
 //  CatWalk
@@ -51,3 +52,4 @@ struct CWTransactionRow: View {
         .foregroundColor(.secondary)
     }
 }
+#endif

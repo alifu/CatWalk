@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWBodyPreviewTests.swift
 //  CatWalk
@@ -54,3 +55,4 @@ struct CWBodyPreviewTests {
         #expect(CWJSONNode.null.childCount == nil)
     }
 }
+#endif

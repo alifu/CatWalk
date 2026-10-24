@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWLegacyStorageCleanerTests.swift
 //  CatWalk
@@ -29,3 +30,4 @@ struct CWLegacyStorageCleanerTests {
         #expect(!CWLegacyStorageCleaner.removeLegacyDirectory(in: base))
     }
 }
+#endif

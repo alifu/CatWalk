@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWCertificate.swift
 //  CatWalk
@@ -85,3 +86,4 @@ public struct CWCertificate: Sendable, Equatable, Identifiable {
         kSecAttrKeyTypeECSECPrimeRandom as String: "EC",
     ]
 }
+#endif

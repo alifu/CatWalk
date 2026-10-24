@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWBody.swift
 //  CatWalk
@@ -61,3 +62,4 @@ struct CWBodyAccumulator: Sendable {
         totalBytes == 0 ? nil : CWBody(data: data, totalBytes: totalBytes)
     }
 }
+#endif

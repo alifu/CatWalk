@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWFloatingBubble.swift
 //  CatWalk
@@ -145,3 +146,4 @@ final class CWFloatingBubble {
         }
     }
 }
+#endif

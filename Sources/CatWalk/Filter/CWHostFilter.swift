@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWHostFilter.swift
 //  CatWalk
@@ -115,3 +116,4 @@ private extension CWHostFilter {
         return !isWildcard || labels.count >= 2
     }
 }
+#endif

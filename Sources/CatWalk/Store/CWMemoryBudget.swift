@@ -1,3 +1,4 @@
+#if CATWALK_ENABLED
 //
 //  CWMemoryBudget.swift
 //  CatWalk
@@ -30,3 +31,4 @@ struct CWMemoryBudget: Sendable, Equatable {
         totalBodyBytes = 0
     }
 }
+#endif

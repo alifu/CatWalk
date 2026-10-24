@@ -58,6 +58,7 @@ struct CWRecorder: Sendable {
         response: URLResponse?,
         body: CWBody?,
         error: (any Error)?,
+        tls: CWTLSInfo? = nil,
         at date: Date = Date()
     ) -> CWTransaction {
         let http = response as? HTTPURLResponse
@@ -81,12 +82,14 @@ struct CWRecorder: Sendable {
                 error: CWTransactionError(error),
                 response: httpResponse,
                 responseCookies: responseCookies,
+                tls: tls,
                 at: date
             )
         }
         return transaction.completed(
             response: httpResponse,
             responseCookies: responseCookies,
+            tls: tls,
             at: date
         )
     }

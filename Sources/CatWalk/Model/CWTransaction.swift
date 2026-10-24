@@ -32,6 +32,9 @@ public struct CWTransaction: Sendable, Identifiable, Equatable {
 
     public let error: CWTransactionError?
 
+    /// `nil` for plain HTTP, and until the exchange finishes.
+    public let tls: CWTLSInfo?
+
     /// Lowercased "method url status", built once per state for O(1)-setup search.
     let searchKey: String
 
@@ -54,7 +57,8 @@ public struct CWTransaction: Sendable, Identifiable, Equatable {
             response: nil,
             responseCookies: [],
             endDate: nil,
-            error: nil
+            error: nil,
+            tls: nil
         )
     }
 
@@ -67,7 +71,8 @@ public struct CWTransaction: Sendable, Identifiable, Equatable {
         response: CWHTTPResponse?,
         responseCookies: [CWCookie],
         endDate: Date?,
-        error: CWTransactionError?
+        error: CWTransactionError?,
+        tls: CWTLSInfo?
     ) {
         self.id = id
         self.state = state
@@ -78,6 +83,7 @@ public struct CWTransaction: Sendable, Identifiable, Equatable {
         self.responseCookies = responseCookies
         self.endDate = endDate
         self.error = error
+        self.tls = tls
         self.searchKey = Self.makeSearchKey(request: request, response: response)
     }
 }
@@ -89,18 +95,20 @@ extension CWTransaction {
     func completed(
         response: CWHTTPResponse?,
         responseCookies: [CWCookie],
+        tls: CWTLSInfo? = nil,
         at date: Date
     ) -> CWTransaction {
-        finished(.completed, response: response, responseCookies: responseCookies, error: nil, at: date)
+        finished(.completed, response: response, responseCookies: responseCookies, error: nil, tls: tls, at: date)
     }
 
     func failed(
         error: CWTransactionError,
         response: CWHTTPResponse?,
         responseCookies: [CWCookie],
+        tls: CWTLSInfo? = nil,
         at date: Date
     ) -> CWTransaction {
-        finished(.failed, response: response, responseCookies: responseCookies, error: error, at: date)
+        finished(.failed, response: response, responseCookies: responseCookies, error: error, tls: tls, at: date)
     }
 
     private func finished(
@@ -108,6 +116,7 @@ extension CWTransaction {
         response: CWHTTPResponse?,
         responseCookies: [CWCookie],
         error: CWTransactionError?,
+        tls: CWTLSInfo?,
         at date: Date
     ) -> CWTransaction {
         CWTransaction(
@@ -119,7 +128,8 @@ extension CWTransaction {
             response: response,
             responseCookies: responseCookies,
             endDate: date,
-            error: error
+            error: error,
+            tls: tls
         )
     }
 }
@@ -143,7 +153,8 @@ extension CWTransaction {
             response: response?.strippingBody(),
             responseCookies: responseCookies,
             endDate: endDate,
-            error: error
+            error: error,
+            tls: tls
         )
     }
 }

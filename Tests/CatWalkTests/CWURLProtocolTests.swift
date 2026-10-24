@@ -11,13 +11,14 @@ import Testing
 @Suite("CWURLProtocol integration", .serialized)
 final class CWURLProtocolTests {
 
-    private let engine = CWCaptureEngine.shared
+    let engine = CWCaptureEngine.shared
     private let baseURL = URL(string: "https://stub.test")!
     private let session: URLSession
 
     init() {
         StubURLProtocol.reset()
         engine.store.removeAll()
+        engine.certificates.removeAll()
         engine.start(
             configuration: CWConfiguration(interceptCustomSessions: false),
             upstreamProtocolClasses: [StubURLProtocol.self]
@@ -158,5 +159,182 @@ final class CWURLProtocolTests {
         #expect(throws: CWConfigurationError.invalidHost("*.com")) {
             try CatWalk.ignore(host: "*.com")
         }
+    }
+
+    // MARK: - TLS
+
+    private func finished(path: String, timeout: TimeInterval = 2) async -> CWTransaction? {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if let done = engine.store.snapshot().first(where: { $0.request.url.path == path && $0.state != .inFlight }) {
+                return done
+            }
+            try? await Task.sleep(nanoseconds: 10_000_000)
+        }
+        return nil
+    }
+
+    private func pinnedSession(_ answer: PinningDelegate.Answer) -> (URLSession, PinningDelegate) {
+        let delegate = PinningDelegate(answer: answer)
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [CWURLProtocol.self]
+        return (URLSession(configuration: configuration, delegate: delegate, delegateQueue: nil), delegate)
+    }
+
+    @Test("a cancelling delegate (pinning failure) fails the load")
+    func pinningRejects() async throws {
+        StubURLProtocol.stub("/pinned", .serverTrust(
+            certificates: [CertificateFixtures.rsaDER],
+            then: .response(status: 200, headers: [:], body: Data())
+        ))
+        let (pinned, delegate) = pinnedSession(.reject)
+        defer { pinned.invalidateAndCancel() }
+
+        await #expect(throws: URLError.self) {
+            _ = try await pinned.data(from: self.baseURL.appendingPathComponent("pinned"))
+        }
+
+        // The app sees the error first; the upstream cancellation is recorded just after.
+        let transaction = try #require(await finished(path: "/pinned"))
+        #expect(delegate.seenHosts == ["stub.test"])
+        #expect(transaction.state == .failed)
+        #expect(transaction.tls?.trustDecision == .cancelled)
+    }
+
+    @Test("without a delegate the system default handling is used")
+    func defaultHandling() async throws {
+        StubURLProtocol.stub("/plain", .serverTrust(
+            certificates: [CertificateFixtures.ecDER],
+            then: .response(status: 204, headers: [:], body: Data())
+        ))
+
+        _ = try await session.data(from: baseURL.appendingPathComponent("plain"))
+
+        #expect(StubURLProtocol.challengeAnswers == [.defaultHandling])
+        #expect(engine.store.snapshot().first?.tls?.trustDecision == .defaultHandling)
+    }
+
+    // MARK: - Challenge forwarding (driven directly: URLSession drops injected test trusts)
+
+    private func startHangingLoad(_ path: String, client: RecordingProtocolClient) -> CWURLProtocol {
+        StubURLProtocol.stub("/" + path, .hang)
+        let request = URLRequest(url: baseURL.appendingPathComponent(path))
+        let load = CWURLProtocol(request: request, cachedResponse: nil, client: client)
+        load.startLoading()
+        return load
+    }
+
+    private func fixtureChallenge(_ der: Data) -> URLAuthenticationChallenge {
+        let trust = CertificateFixtures.trust([SecCertificateCreateWithData(nil, der as CFData)!])
+        return URLAuthenticationChallenge(
+            protectionSpace: StubTrustProtectionSpace(host: "stub.test", port: 443, trust: trust),
+            proposedCredential: nil,
+            previousFailureCount: 0,
+            failureResponse: nil,
+            error: nil,
+            sender: StubChallengeSender()
+        )
+    }
+
+    @Test("the app's answer is relayed upstream and the chain is recorded", arguments: [
+        (RecordingProtocolClient.Answer.useCredential, URLSession.AuthChallengeDisposition.useCredential, CWTrustDecision.usedCredential),
+        (.cancel, .cancelAuthenticationChallenge, .cancelled),
+        (.performDefaultHandling, .performDefaultHandling, .defaultHandling),
+        (.continueWithoutCredential, .performDefaultHandling, .defaultHandling),
+        (.rejectProtectionSpace, .rejectProtectionSpace, .rejectedProtectionSpace),
+    ])
+    func forwarding(
+        answer: RecordingProtocolClient.Answer,
+        expected: URLSession.AuthChallengeDisposition,
+        decision: CWTrustDecision
+    ) throws {
+        let client = RecordingProtocolClient(answer: answer)
+        let load = startHangingLoad("forward", client: client)
+        defer { load.stopLoading() }
+        let upstream = CWLocked<URLSession.AuthChallengeDisposition?>(nil)
+
+        load.bridgeDidReceive(fixtureChallenge(CertificateFixtures.rsaDER)) { disposition, _ in
+            upstream.withLock { $0 = disposition }
+        }
+        load.bridgeDidComplete(with: nil)
+
+        let transaction = try #require(engine.store.snapshot().first)
+        #expect(client.challengeCount == 1)
+        #expect(upstream.withLock { $0 } == expected)
+        #expect(transaction.tls?.trustDecision == decision)
+        #expect(transaction.tls?.certificates.map(\.summary) == ["rsa.catwalk.test"])
+        #expect(transaction.tls?.isChainFromEarlierConnection == false)
+    }
+
+    @Test("a pending challenge is cancelled upstream when the load stops")
+    func stopCancelsChallenge() {
+        let client = RecordingProtocolClient(answer: nil)
+        let load = startHangingLoad("stopped", client: client)
+        let upstream = CWLocked<URLSession.AuthChallengeDisposition?>(nil)
+
+        load.bridgeDidReceive(fixtureChallenge(CertificateFixtures.rsaDER)) { disposition, _ in
+            upstream.withLock { $0 = disposition }
+        }
+        load.stopLoading()
+
+        #expect(upstream.withLock { $0 } == .cancelAuthenticationChallenge)
+    }
+
+    @Test("a load without a handshake reuses the chain seen earlier for that host")
+    func cachedChain() throws {
+        let first = startHangingLoad("first", client: RecordingProtocolClient(answer: .performDefaultHandling))
+        first.bridgeDidReceive(fixtureChallenge(CertificateFixtures.ecDER)) { _, _ in }
+        first.bridgeDidComplete(with: nil)
+        first.stopLoading()
+
+        let second = startHangingLoad("second", client: RecordingProtocolClient(answer: nil))
+        second.bridgeDidComplete(with: nil)
+        second.stopLoading()
+
+        let transaction = try #require(engine.store.snapshot().first)
+        #expect(transaction.request.url.path == "/second")
+        #expect(transaction.tls?.isChainFromEarlierConnection == true)
+        #expect(transaction.tls?.certificates.first?.summary == "ec.catwalk.test")
+        #expect(transaction.tls?.trustDecision == nil)
+    }
+
+    @Test("plain HTTP has no TLS info")
+    func plainHTTP() async throws {
+        StubURLProtocol.stub("/http", .response(status: 200, headers: [:], body: Data()))
+
+        _ = try await session.data(from: try #require(URL(string: "http://stub.test/http")))
+
+        #expect(engine.store.snapshot().first?.tls == nil)
+    }
+}
+
+/// App-side delegate standing in for an SSL-pinning implementation.
+final class PinningDelegate: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
+
+    enum Answer { case accept, reject }
+
+    private let answer: Answer
+    private let hosts = CWLocked<[String]>([])
+
+    init(answer: Answer) {
+        self.answer = answer
+    }
+
+    var seenHosts: [String] {
+        hosts.withLock { $0 }
+    }
+
+    func urlSession(
+        _ session: URLSession,
+        task: URLSessionTask,
+        didReceive challenge: URLAuthenticationChallenge,
+        completionHandler: @escaping @Sendable (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
+    ) {
+        hosts.withLock { $0.append(challenge.protectionSpace.host) }
+        guard answer == .accept, let trust = challenge.protectionSpace.serverTrust else {
+            completionHandler(.cancelAuthenticationChallenge, nil)
+            return
+        }
+        completionHandler(.useCredential, URLCredential(trust: trust))
     }
 }

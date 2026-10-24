@@ -14,13 +14,21 @@ protocol CWSessionBridgeClient: AnyObject, Sendable {
 
     func bridgeWillRedirect(to request: URLRequest, response: HTTPURLResponse)
 
+    /// The client must eventually call `completionHandler` exactly once.
+    func bridgeDidReceive(
+        _ challenge: URLAuthenticationChallenge,
+        completionHandler: @escaping @Sendable (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
+    )
+
+    func bridgeDidCollect(_ metrics: CWConnectionMetrics)
+
     func bridgeDidComplete(with error: (any Error)?)
 }
 
 /// One shared `URLSession` that performs every intercepted request upstream.
 ///
 /// Replaces the old session-per-request design: connections are reused and
-/// delegate callbacks (needed for redirects, and TLS/metrics in Phase 3) are available.
+/// delegate callbacks (redirects, auth challenges, metrics) are available.
 final class CWSessionBridge: Sendable {
 
     private let session: URLSession
@@ -98,6 +106,30 @@ private final class CWSessionDelegate: NSObject, URLSessionDataDelegate, Sendabl
         client(for: task)?.bridgeWillRedirect(to: request, response: response)
         task.cancel()
         completionHandler(nil)
+    }
+
+    /// Every challenge goes to the app's own session, so its pinning or credentials decide.
+    func urlSession(
+        _ session: URLSession,
+        task: URLSessionTask,
+        didReceive challenge: URLAuthenticationChallenge,
+        completionHandler: @escaping @Sendable (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
+    ) {
+        guard let client = client(for: task) else {
+            completionHandler(.cancelAuthenticationChallenge, nil)
+            return
+        }
+        client.bridgeDidReceive(challenge, completionHandler: completionHandler)
+    }
+
+    /// Arrives before `didCompleteWithError`.
+    func urlSession(
+        _ session: URLSession,
+        task: URLSessionTask,
+        didFinishCollecting metrics: URLSessionTaskMetrics
+    ) {
+        guard let connection = CWConnectionMetrics(metrics) else { return }
+        client(for: task)?.bridgeDidCollect(connection)
     }
 
     func urlSession(

@@ -16,6 +16,8 @@ final class CWCaptureEngine: Sendable {
 
     let store = CWTransactionStore()
 
+    let certificates = CWCertificateCache()
+
     private static let logger = Logger(subsystem: "com.catwalk", category: "engine")
 
     private struct Runtime {

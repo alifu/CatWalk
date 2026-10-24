@@ -105,6 +105,18 @@ final class CWCaptureEngine: Sendable {
         }
     }
 
+    /// Pauses or resumes capture, keeping the current configuration and runtime ignore rules.
+    func setCapturing(_ isCapturing: Bool) {
+        guard isCapturing != isRunning else { return }
+        guard isCapturing else {
+            stop()
+            return
+        }
+        var configuration = recorder.configuration
+        configuration.ignoredHosts = ignoredHostRules
+        start(configuration: configuration)
+    }
+
     /// Stops capturing new requests; in-flight ones finish normally.
     /// Configuration swizzling stays installed but is inert (`canInit` returns `false`).
     func stop() {

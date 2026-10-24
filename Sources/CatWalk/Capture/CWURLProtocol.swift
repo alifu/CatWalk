@@ -81,6 +81,12 @@ final class CWURLProtocol: URLProtocol, CWSessionBridgeClient, URLAuthentication
         }
 
         engine.store.upsert(transaction)
+
+        if let rule = engine.mocks.match(request) {
+            answerWithMock(rule, recorder: recorder, transaction: transaction)
+            return
+        }
+
         let task = engine.bridge.makeTask(for: upstream, client: self)
 
         let isStopped = state.withLock { state in
@@ -247,6 +253,54 @@ private extension CWURLProtocol {
         state.withLock { state in
             state.certificates = chain
             state.trustDecision = decision
+        }
+    }
+}
+
+// MARK: - Mocking
+
+private extension CWURLProtocol {
+
+    /// Answers from `rule` after its delay; the upstream network is never used.
+    func answerWithMock(_ rule: CWMockRule, recorder: CWRecorder, transaction: CWTransaction) {
+        state.withLock { state in
+            state.recorder = recorder
+            state.transaction = transaction
+        }
+        let finish = { [self] in finishMock(rule.response, recorder: recorder, transaction: transaction) }
+
+        if rule.response.delay > 0 {
+            DispatchQueue.global().asyncAfter(deadline: .now() + rule.response.delay, execute: finish)
+        } else {
+            finish()
+        }
+    }
+
+    func finishMock(_ mock: CWMockResponse, recorder: CWRecorder, transaction: CWTransaction) {
+        let url = transaction.request.url
+        let httpResponse = mock.error == nil ? CWMockResponder.httpResponse(for: mock, url: url) : nil
+        let error: (any Error)? = mock.error.map { URLError($0) }
+
+        let shouldNotify = state.withLock { state -> Bool? in
+            guard !state.isFinished else { return nil }
+            state.isFinished = true
+            return !state.isStopped
+        }
+        guard let shouldNotify else { return }
+
+        let body = mock.body.isEmpty ? nil : CWBody(capturing: mock.body, limit: recorder.configuration.maxBodyBytes)
+        let completed = recorder.complete(transaction, response: httpResponse, body: body, error: error)
+        engine.store.upsert(completed.markedMocked())
+        guard shouldNotify else { return }
+
+        if let error {
+            client?.urlProtocol(self, didFailWithError: error)
+        } else if let httpResponse {
+            client?.urlProtocol(self, didReceive: httpResponse, cacheStoragePolicy: .notAllowed)
+            client?.urlProtocol(self, didLoad: mock.body)
+            client?.urlProtocolDidFinishLoading(self)
+        } else {
+            client?.urlProtocol(self, didFailWithError: URLError(.badServerResponse))
         }
     }
 }

@@ -12,6 +12,8 @@ public struct CWTransaction: Sendable, Identifiable, Equatable {
         case inFlight
         case completed
         case failed
+        /// Answered by a `CWMockRule`; the network was not used.
+        case mocked
     }
 
     public let id: UUID
@@ -37,6 +39,10 @@ public struct CWTransaction: Sendable, Identifiable, Equatable {
 
     /// Lowercased "method url status", built once per state for O(1)-setup search.
     let searchKey: String
+
+    public var isMocked: Bool {
+        state == .mocked
+    }
 
     public var duration: TimeInterval? {
         endDate.map { $0.timeIntervalSince(startDate) }
@@ -109,6 +115,22 @@ extension CWTransaction {
         at date: Date
     ) -> CWTransaction {
         finished(.failed, response: response, responseCookies: responseCookies, error: error, tls: tls, at: date)
+    }
+
+    /// Same exchange, flagged as answered by a mock rule.
+    func markedMocked() -> CWTransaction {
+        CWTransaction(
+            id: id,
+            state: .mocked,
+            request: request,
+            requestCookies: requestCookies,
+            startDate: startDate,
+            response: response,
+            responseCookies: responseCookies,
+            endDate: endDate,
+            error: error,
+            tls: tls
+        )
     }
 
     private func finished(

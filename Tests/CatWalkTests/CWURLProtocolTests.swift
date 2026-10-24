@@ -19,6 +19,7 @@ final class CWURLProtocolTests {
         StubURLProtocol.reset()
         engine.store.removeAll()
         engine.certificates.removeAll()
+        engine.mocks.removeAll()
         engine.start(
             configuration: CWConfiguration(interceptCustomSessions: false),
             upstreamProtocolClasses: [StubURLProtocol.self]
@@ -33,6 +34,63 @@ final class CWURLProtocolTests {
         session.invalidateAndCancel()
         CWCaptureEngine.shared.stop()
         CWCaptureEngine.shared.store.removeAll()
+        CWCaptureEngine.shared.mocks.removeAll()
+    }
+
+    // MARK: - Mocking
+
+    @Test("a mock answers without touching the network and is recorded as mocked")
+    func mockedResponse() async throws {
+        StubURLProtocol.stub("/products", .response(status: 500, headers: [:], body: Data("real".utf8)))
+        let rule = CWMockRule.get("/products").respond(status: 200, json: ["ok": true])
+        try CatWalk.mock(rule)
+
+        let (data, response) = try await session.data(from: baseURL.appendingPathComponent("products"))
+
+        let transaction = try #require(engine.store.snapshot().first)
+        #expect((response as? HTTPURLResponse)?.statusCode == 200)
+        #expect(String(data: data, encoding: .utf8) == #"{"ok":true}"#)
+        #expect(StubURLProtocol.receivedBody(for: "/products") == nil)
+        #expect(transaction.state == .mocked)
+        #expect(transaction.isMocked)
+        #expect(transaction.response?.body?.data == data)
+        #expect(CatWalk.mockHitCount(id: rule.id) == 1)
+    }
+
+    @Test("a disabled mock lets the request through to the network")
+    func disabledMockPassesThrough() async throws {
+        StubURLProtocol.stub("/products", .response(status: 200, headers: [:], body: Data("real".utf8)))
+        let rule = CWMockRule.get("/products").respond(status: 418)
+        try CatWalk.mock(rule.enabled(false))
+
+        let (data, _) = try await session.data(from: baseURL.appendingPathComponent("products"))
+
+        #expect(String(data: data, encoding: .utf8) == "real")
+        #expect(engine.store.snapshot().first?.state == .completed)
+    }
+
+    @Test("an error mock fails the request with that URLError")
+    func mockedError() async throws {
+        try CatWalk.mock(CWMockRule.get("/offline").fail(with: .notConnectedToInternet))
+
+        await #expect(throws: URLError.self) {
+            _ = try await self.session.data(from: self.baseURL.appendingPathComponent("offline"))
+        }
+
+        let transaction = try #require(engine.store.snapshot().first)
+        #expect(transaction.state == .mocked)
+        #expect(transaction.error?.code == URLError.notConnectedToInternet.rawValue)
+    }
+
+    @Test("the mock delay is honoured")
+    func mockedDelay() async throws {
+        try CatWalk.mock(CWMockRule.get("/slow").respond(delay: 0.3))
+
+        let started = Date()
+        _ = try await session.data(from: baseURL.appendingPathComponent("slow"))
+
+        #expect(Date().timeIntervalSince(started) >= 0.25)
+        #expect(try #require(engine.store.snapshot().first).duration ?? 0 >= 0.25)
     }
 
     @Test("captures a GET with response body and cookies")

@@ -25,6 +25,7 @@ final class CWFloatingBubble {
     private let onTap: () -> Void
     private var window: CWBubbleWindow?
     private var button: UIButton?
+    private let badge = UILabel()
     private var isHidden = false
     private var countObserver: AnyCancellable?
     private var activationObserver: NSObjectProtocol?
@@ -96,18 +97,26 @@ final class CWFloatingBubble {
     }
 
     private func makeButton() -> UIButton {
-        var configuration = UIButton.Configuration.filled()
-        configuration.cornerStyle = .capsule
-        configuration.image = UIImage(systemName: "network")
-        configuration.imagePlacement = .top
-        configuration.imagePadding = 0
-        configuration.contentInsets = NSDirectionalEdgeInsets(top: 6, leading: 4, bottom: 6, trailing: 4)
-        configuration.baseBackgroundColor = .systemIndigo
-        configuration.baseForegroundColor = .white
-        let button = UIButton(configuration: configuration, primaryAction: UIAction { [weak self] _ in self?.onTap() })
-        button.titleLabel?.font = .monospacedDigitSystemFont(ofSize: 10, weight: .bold)
+        let button = UIButton(type: .custom, primaryAction: UIAction { [weak self] _ in self?.onTap() })
+        button.setImage(CWIcon.image, for: .normal)
+        button.imageView?.contentMode = .scaleAspectFit
+        button.contentHorizontalAlignment = .fill
+        button.contentVerticalAlignment = .fill
+        button.layer.shadowColor = UIColor.black.cgColor
+        button.layer.shadowOpacity = 0.3
+        button.layer.shadowRadius = 6
+        button.layer.shadowOffset = CGSize(width: 0, height: 3)
         button.accessibilityLabel = "CatWalk network inspector"
         button.addGestureRecognizer(UIPanGestureRecognizer(target: self, action: #selector(drag(_:))))
+
+        badge.font = .monospacedDigitSystemFont(ofSize: 11, weight: .bold)
+        badge.textColor = .white
+        badge.backgroundColor = .systemRed
+        badge.textAlignment = .center
+        badge.layer.cornerRadius = 9
+        badge.layer.masksToBounds = true
+        badge.isUserInteractionEnabled = false
+        button.addSubview(badge)
         return button
     }
 
@@ -125,7 +134,11 @@ final class CWFloatingBubble {
     }
 
     private func show(count: Int) {
-        button?.configuration?.title = count > 999 ? "999+" : String(count)
+        let text = count > 999 ? "999+" : String(count)
+        badge.text = text
+        badge.isHidden = count == 0
+        let width = max(18, badge.intrinsicContentSize.width + 10)
+        badge.frame = CGRect(x: Self.diameter - width + 6, y: -6, width: width, height: 18)
         button?.accessibilityValue = "\(count) requests"
     }
 

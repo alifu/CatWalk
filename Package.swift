@@ -26,6 +26,7 @@ let package = Package(
     targets: [
         .target(
             name: "CatWalk",
+            resources: [.process("Resources")],
             swiftSettings: inspectorSettings
         ),
         .testTarget(

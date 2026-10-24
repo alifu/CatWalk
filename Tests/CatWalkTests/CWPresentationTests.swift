@@ -13,6 +13,11 @@ import UIKit
 @MainActor
 struct CWPresentationTests {
 
+    @Test("the vector icon loads from the package bundle")
+    func iconLoads() {
+        #expect(CWIcon.image != nil)
+    }
+
     @Test("triggers: shake by default, manual is empty")
     func triggers() {
         #expect(CWConfiguration.default.triggers == [.shake])

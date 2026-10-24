@@ -22,7 +22,6 @@ struct MainView: View {
                 CWFilterBar(viewModel: viewModel).padding(.vertical, 8)
                 list
             }
-            .navigationTitle("CatWalk")
             .navigationBarTitleDisplayMode(.inline)
             .searchable(text: $viewModel.filter.searchText, placement: .navigationBarDrawer(displayMode: .always))
             .toolbar { toolbar }
@@ -91,6 +90,12 @@ struct MainView: View {
 
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
+        ToolbarItem(placement: .principal) {
+            HStack(spacing: 6) {
+                CWIcon.swiftUIImage.resizable().frame(width: 22, height: 22).accessibilityHidden(true)
+                Text("CatWalk").font(.headline)
+            }
+        }
         ToolbarItem(placement: .navigationBarLeading) {
             Button { onDismiss() } label: { Image(systemName: "xmark") }
                 .accessibilityLabel("Close")

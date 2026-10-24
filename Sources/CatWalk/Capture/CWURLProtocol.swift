@@ -29,7 +29,7 @@ final class CWURLProtocol: URLProtocol, CWSessionBridgeClient, @unchecked Sendab
 
     // MARK: - URLProtocol
 
-    /// O(1): running flag, scheme set lookup, handled marker.
+    /// O(L): running flag, scheme set lookup, handled marker, ignored-host walk.
     override class func canInit(with request: URLRequest) -> Bool {
         guard
             CWCaptureEngine.shared.isRunning,
@@ -38,7 +38,8 @@ final class CWURLProtocol: URLProtocol, CWSessionBridgeClient, @unchecked Sendab
         else {
             return false
         }
-        return property(forKey: handledKey, in: request) == nil
+        guard property(forKey: handledKey, in: request) == nil else { return false }
+        return !CWCaptureEngine.shared.isIgnored(host: request.url?.host)
     }
 
     override class func canonicalRequest(for request: URLRequest) -> URLRequest {

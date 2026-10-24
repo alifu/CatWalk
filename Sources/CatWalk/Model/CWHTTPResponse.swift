@@ -31,4 +31,8 @@ public struct CWHTTPResponse: Sendable, Equatable {
         self.body = body
         self.mimeType = mimeType
     }
+
+    func strippingBody() -> CWHTTPResponse {
+        CWHTTPResponse(statusCode: statusCode, headers: headers, body: body?.strippingData(), mimeType: mimeType)
+    }
 }

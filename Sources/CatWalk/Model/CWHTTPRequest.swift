@@ -31,4 +31,8 @@ public struct CWHTTPRequest: Sendable, Equatable {
         self.headers = headers
         self.body = body
     }
+
+    func strippingBody() -> CWHTTPRequest {
+        CWHTTPRequest(method: method, url: url, headers: headers, body: body?.strippingData())
+    }
 }

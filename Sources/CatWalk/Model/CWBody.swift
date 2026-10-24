@@ -23,6 +23,11 @@ public struct CWBody: Sendable, Equatable {
         self.totalBytes = totalBytes
     }
 
+    /// Same size, no bytes: what remains after a memory purge.
+    func strippingData() -> CWBody {
+        CWBody(data: Data(), totalBytes: totalBytes)
+    }
+
     /// O(min(size, limit)): copies only the kept prefix; shares storage when under the limit.
     init(capturing data: Data, limit: Int) {
         let kept = data.count <= limit ? data : Data(data.prefix(max(0, limit)))

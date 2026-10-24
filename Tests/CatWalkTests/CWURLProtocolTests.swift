@@ -118,4 +118,45 @@ final class CWURLProtocolTests {
         #expect(URLSessionConfiguration.ephemeral.protocolClasses?.first.map(ObjectIdentifier.init) == catWalk)
         #expect(URLSessionConfiguration.default.protocolClasses?.filter { ObjectIdentifier($0) == catWalk }.count == 1)
     }
+
+    @Test("ignored hosts are not intercepted, others still are")
+    func ignoredHosts() throws {
+        let ignored = URLRequest(url: try #require(URL(string: "https://cdn.analytics.test/p")))
+        let kept = URLRequest(url: try #require(URL(string: "https://api.test/p")))
+
+        try CatWalk.ignore(host: "*.analytics.test")
+
+        #expect(!CWURLProtocol.canInit(with: ignored))
+        #expect(CWURLProtocol.canInit(with: kept))
+        #expect(CatWalk.ignoredHosts == ["*.analytics.test"])
+
+        try CatWalk.unignore(host: "*.analytics.test")
+        #expect(CWURLProtocol.canInit(with: ignored))
+    }
+
+    @Test("ignoredHosts in the configuration apply on start; invalid ones are skipped")
+    func configuredIgnoredHosts() throws {
+        engine.start(
+            configuration: CWConfiguration(interceptCustomSessions: false, ignoredHosts: ["a.test", "*.com"]),
+            upstreamProtocolClasses: [StubURLProtocol.self]
+        )
+
+        #expect(CatWalk.ignoredHosts == ["a.test"])
+    }
+
+    @Test("an ignored host is passed straight through and never recorded")
+    func ignoredNotRecorded() async throws {
+        try CatWalk.ignore(host: "stub.test")
+
+        _ = try? await session.data(from: baseURL.appendingPathComponent("anything"))
+
+        #expect(engine.store.count == 0)
+    }
+
+    @Test("invalid host rules throw")
+    func invalidRule() {
+        #expect(throws: CWConfigurationError.invalidHost("*.com")) {
+            try CatWalk.ignore(host: "*.com")
+        }
+    }
 }

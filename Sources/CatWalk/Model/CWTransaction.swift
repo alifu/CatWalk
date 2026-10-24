@@ -124,6 +124,30 @@ extension CWTransaction {
     }
 }
 
+// MARK: - Memory
+
+extension CWTransaction {
+
+    /// Captured body bytes held by this transaction (request + response).
+    var storedBodyBytes: Int {
+        (request.body?.data.count ?? 0) + (response?.body?.data.count ?? 0)
+    }
+
+    func strippingBodies() -> CWTransaction {
+        CWTransaction(
+            id: id,
+            state: state,
+            request: request.strippingBody(),
+            requestCookies: requestCookies,
+            startDate: startDate,
+            response: response?.strippingBody(),
+            responseCookies: responseCookies,
+            endDate: endDate,
+            error: error
+        )
+    }
+}
+
 // MARK: - Search
 
 private extension CWTransaction {

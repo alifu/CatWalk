@@ -4,6 +4,10 @@
 //
 
 import Foundation
+import os
+#if canImport(UIKit)
+import UIKit
+#endif
 
 /// Process-wide capture state shared by `CatWalk` and `CWURLProtocol`.
 final class CWCaptureEngine: Sendable {
@@ -12,8 +16,11 @@ final class CWCaptureEngine: Sendable {
 
     let store = CWTransactionStore()
 
+    private static let logger = Logger(subsystem: "com.catwalk", category: "engine")
+
     private struct Runtime {
         var isRunning = false
+        var hostFilter = CWHostFilter.empty
         var recorder = CWRecorder(configuration: .default)
         var bridge: CWSessionBridge?
     }
@@ -22,6 +29,29 @@ final class CWCaptureEngine: Sendable {
 
     var isRunning: Bool {
         runtime.withLock { $0.isRunning }
+    }
+
+    /// O(L) in host labels; see `CWHostFilter`.
+    func isIgnored(host: String?) -> Bool {
+        runtime.withLock { $0.hostFilter }.isIgnored(host)
+    }
+
+    var ignoredHostRules: [String] {
+        runtime.withLock { $0.hostFilter.rules }
+    }
+
+    func ignore(host rule: String) throws {
+        try updateFilter { try $0.adding(rule) }
+    }
+
+    func unignore(host rule: String) throws {
+        try updateFilter { try $0.removing(rule) }
+    }
+
+    private func updateFilter(_ transform: (CWHostFilter) throws -> CWHostFilter) throws {
+        try runtime.withLock { runtime in
+            runtime.hostFilter = try transform(runtime.hostFilter)
+        }
     }
 
     var recorder: CWRecorder {
@@ -43,11 +73,18 @@ final class CWCaptureEngine: Sendable {
     /// - Parameter upstreamProtocolClasses: test hook to replace the real network.
     func start(configuration: CWConfiguration, upstreamProtocolClasses: [AnyClass] = []) {
         let bridge = CWSessionBridge(protocolClasses: upstreamProtocolClasses)
+        let (hostFilter, rejectedRules) = CWHostFilter.build(from: configuration.ignoredHosts)
+        rejectedRules.forEach { Self.logger.warning("Ignoring invalid host rule: \($0, privacy: .public)") }
+
+        store.configure(capacity: configuration.maxTransactions, maxTotalBodyBytes: configuration.maxTotalBodyBytes)
+        CWLegacyStorageCleaner.cleanOnce()
+        observeMemoryWarnings()
 
         let (previousBridge, wasRunning) = runtime.withLock { runtime in
             let previous = (runtime.bridge, runtime.isRunning)
             runtime = Runtime(
                 isRunning: true,
+                hostFilter: hostFilter,
                 recorder: CWRecorder(configuration: configuration),
                 bridge: bridge
             )
@@ -69,5 +106,23 @@ final class CWCaptureEngine: Sendable {
     func stop() {
         runtime.withLock { $0.isRunning = false }
         URLProtocol.unregisterClass(CWURLProtocol.self)
+    }
+
+    private let memoryWarningObserver = CWLocked<(any NSObjectProtocol)?>(nil)
+
+    /// Frees captured bodies of finished transactions when the system runs low on memory.
+    private func observeMemoryWarnings() {
+        #if canImport(UIKit)
+        memoryWarningObserver.withLock { observer in
+            guard observer == nil else { return }
+            observer = NotificationCenter.default.addObserver(
+                forName: UIApplication.didReceiveMemoryWarningNotification,
+                object: nil,
+                queue: nil
+            ) { [store] _ in
+                store.purgeCompletedBodies()
+            }
+        }
+        #endif
     }
 }

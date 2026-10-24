@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		40DA56E03010B00000E76AF5 /* CatWalk in Frameworks */ = {isa = PBXBuildFile; productRef = 40DA56E23010B00000E76AF5 /* CatWalk */; };
 		40DA56DA3010A06C00E76AF5 /* SkeletonView in Frameworks */ = {isa = PBXBuildFile; productRef = 40DA56D93010A06C00E76AF5 /* SkeletonView */; };
 		40DA56DD3010A08600E76AF5 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = 40DA56DC3010A08600E76AF5 /* SnapKit */; };
 /* End PBXBuildFile section */
@@ -42,6 +43,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				40DA56DA3010A06C00E76AF5 /* SkeletonView in Frameworks */,
+				40DA56E03010B00000E76AF5 /* CatWalk in Frameworks */,
 				40DA56DD3010A08600E76AF5 /* SnapKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -86,6 +88,7 @@
 			name = StackViewHandler;
 			packageProductDependencies = (
 				40DA56D93010A06C00E76AF5 /* SkeletonView */,
+				40DA56E23010B00000E76AF5 /* CatWalk */,
 				40DA56DC3010A08600E76AF5 /* SnapKit */,
 			);
 			productName = StackViewHandler;
@@ -117,6 +120,7 @@
 			mainGroup = 40DA56B730109FAA00E76AF5;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				40DA56E13010B00000E76AF5 /* XCLocalSwiftPackageReference "../../../CatWalk" */,
 				40DA56D83010A06C00E76AF5 /* XCRemoteSwiftPackageReference "SkeletonView" */,
 				40DA56DB3010A08600E76AF5 /* XCRemoteSwiftPackageReference "SnapKit" */,
 			);
@@ -355,6 +359,13 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		40DA56E13010B00000E76AF5 /* XCLocalSwiftPackageReference "../../../CatWalk" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../../../CatWalk;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCRemoteSwiftPackageReference section */
 		40DA56D83010A06C00E76AF5 /* XCRemoteSwiftPackageReference "SkeletonView" */ = {
 			isa = XCRemoteSwiftPackageReference;
@@ -375,6 +386,10 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		40DA56E23010B00000E76AF5 /* CatWalk */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CatWalk;
+		};
 		40DA56D93010A06C00E76AF5 /* SkeletonView */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 40DA56D83010A06C00E76AF5 /* XCRemoteSwiftPackageReference "SkeletonView" */;

@@ -55,6 +55,7 @@ class ProductsViewModel: ObservableObject {
 struct ContentView: View {
     @ObservedObject private var viewModel: ProductsViewModel = ProductsViewModel()
     @State private var didAppear = false
+    @State private var showsInspector = false
 
     var body: some View {
         Group {
@@ -72,6 +73,12 @@ struct ContentView: View {
                 }
             }
         }
+        .overlay(alignment: .bottomLeading) {
+            Button("Inspector") { showsInspector = true }
+                .buttonStyle(.borderedProminent)
+                .padding()
+        }
+        .catWalk(isPresented: $showsInspector)
         .onAppear {
             if !didAppear {
                 viewModel.fetchProducts()

@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import CatWalk
 import SkeletonView
 import SnapKit
 
@@ -96,6 +97,13 @@ class ViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+
+        let inspectorButton = UIButton(type: .system, primaryAction: UIAction(title: "Inspector") { _ in CatWalk.present() })
+        view.addSubview(inspectorButton)
+        inspectorButton.snp.makeConstraints {
+            $0.centerX.equalToSuperview()
+            $0.bottom.equalTo(view.safeAreaLayoutGuide).inset(24)
+        }
         
         self.view.addSubview(self.detailStackView)
         self.view.addSubview(self.showButton)

@@ -39,18 +39,23 @@ public struct CWConfiguration: Sendable {
     /// all its subdomains. Invalid entries are skipped and logged.
     public var ignoredHosts: [String]
 
+    /// What opens the inspector. Default: shake. Use `[]` to open it only from your own code.
+    public var triggers: CWTrigger
+
     public init(
         maxBodyBytes: Int = CWConfiguration.defaultMaxBodyBytes,
         redactedHeaders: Set<String> = CWConfiguration.defaultRedactedHeaders,
         interceptCustomSessions: Bool = true,
         maxTransactions: Int = CWConfiguration.defaultMaxTransactions,
         maxTotalBodyBytes: Int = CWConfiguration.defaultMaxTotalBodyBytes,
-        ignoredHosts: [String] = []
+        ignoredHosts: [String] = [],
+        triggers: CWTrigger = [.shake]
     ) {
         self.maxBodyBytes = max(0, maxBodyBytes)
         self.maxTransactions = max(1, maxTransactions)
         self.maxTotalBodyBytes = max(0, maxTotalBodyBytes)
         self.ignoredHosts = ignoredHosts
+        self.triggers = triggers
         self.redactedHeaders = redactedHeaders
         self.interceptCustomSessions = interceptCustomSessions
     }

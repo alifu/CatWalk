@@ -103,6 +103,8 @@ final class CWCaptureEngine: Sendable {
         if configuration.interceptCustomSessions {
             CWSessionConfigurationSwizzle.install()
         }
+        let triggers = configuration.triggers
+        Task { @MainActor in CWPresenter.shared.configure(triggers: triggers) }
     }
 
     /// Pauses or resumes capture, keeping the current configuration and runtime ignore rules.

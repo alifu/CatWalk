@@ -12,7 +12,7 @@ import CatWalk
 struct DemoSwiftUIApp: App {
     
     init() {
-        CatWalk.start()
+        CatWalk.start(configuration: CWConfiguration(triggers: [.shake, .floatingBubble]))
     }
     
     var body: some Scene {

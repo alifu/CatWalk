@@ -84,3 +84,8 @@ GoogleService-Info.plist
 # JetBrains
 
 .idea/
+
+# Claude Code & graphify (local tooling)
+
+.claude/
+graphify-out/

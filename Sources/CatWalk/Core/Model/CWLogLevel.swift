@@ -7,8 +7,6 @@
 
 import Foundation
 
-import Foundation
-
 public enum CWLogLevel: Int, Codable, Sendable {
 
     case debug

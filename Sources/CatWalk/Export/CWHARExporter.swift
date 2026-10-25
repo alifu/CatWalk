@@ -26,7 +26,25 @@ enum CWHARExporter {
             "request": request(transaction),
             "response": response(transaction),
             "cache": [String: Any](),
-            "timings": ["send": 0, "wait": elapsedMilliseconds, "receive": 0],
+            "timings": timings(transaction.timing, elapsedMilliseconds: elapsedMilliseconds),
+        ]
+    }
+
+    /// HAR uses -1 for phases that did not happen; `connect` includes `ssl`.
+    private static func timings(_ timing: CWTiming?, elapsedMilliseconds: Double) -> [String: Any] {
+        guard let timing else { return ["send": 0, "wait": elapsedMilliseconds, "receive": 0] }
+
+        func milliseconds(_ interval: DateInterval?) -> Double {
+            interval.map { $0.duration * 1000 } ?? -1
+        }
+        return [
+            "blocked": -1,
+            "dns": milliseconds(timing.domainLookup),
+            "connect": milliseconds(timing.connect),
+            "ssl": milliseconds(timing.secureConnection),
+            "send": max(0, milliseconds(timing.request)),
+            "wait": max(0, milliseconds(timing.waiting)),
+            "receive": max(0, milliseconds(timing.response)),
         ]
     }
 

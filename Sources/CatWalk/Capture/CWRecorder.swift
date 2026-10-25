@@ -60,6 +60,7 @@ struct CWRecorder: Sendable {
         body: CWBody?,
         error: (any Error)?,
         tls: CWTLSInfo? = nil,
+        timing: CWTiming? = nil,
         at date: Date = Date()
     ) -> CWTransaction {
         let http = response as? HTTPURLResponse
@@ -84,6 +85,7 @@ struct CWRecorder: Sendable {
                 response: httpResponse,
                 responseCookies: responseCookies,
                 tls: tls,
+                timing: timing,
                 at: date
             )
         }
@@ -91,6 +93,7 @@ struct CWRecorder: Sendable {
             response: httpResponse,
             responseCookies: responseCookies,
             tls: tls,
+            timing: timing,
             at: date
         )
     }

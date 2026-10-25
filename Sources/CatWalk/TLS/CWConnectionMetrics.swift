@@ -14,6 +14,7 @@ struct CWConnectionMetrics: Sendable, Equatable {
     var isReusedConnection = false
     var remoteAddress: String?
     var remotePort: Int?
+    var timing: CWTiming?
 }
 
 extension CWConnectionMetrics {
@@ -27,7 +28,8 @@ extension CWConnectionMetrics {
             isProxyConnection: last.isProxyConnection,
             isReusedConnection: last.isReusedConnection,
             remoteAddress: last.remoteAddress,
-            remotePort: last.remotePort
+            remotePort: last.remotePort,
+            timing: CWTiming(last)
         )
     }
 }

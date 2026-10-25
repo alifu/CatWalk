@@ -113,6 +113,10 @@ private struct CWOverviewTab: View {
             if let error = transaction.error {
                 CWKeyValueRow(name: "Error", value: "\(error.message) (\(error.domain) \(error.code))")
             }
+            if let timing = transaction.timing {
+                Divider()
+                CWTimingView(timing: timing)
+            }
         }
     }
 

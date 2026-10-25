@@ -83,6 +83,30 @@ final class CWURLProtocolTests {
         #expect(transaction.error?.code == URLError.notConnectedToInternet.rawValue)
     }
 
+    @Test("network loads carry a timing breakdown, redirect hops included")
+    func timing() async throws {
+        StubURLProtocol.stub("/old", .redirect(to: baseURL.appendingPathComponent("new")))
+        StubURLProtocol.stub("/new", .response(status: 200, headers: [:], body: Data("done".utf8)))
+
+        _ = try await session.data(from: baseURL.appendingPathComponent("old"))
+
+        try await Task.sleep(nanoseconds: 200_000_000)
+        let hops = engine.store.snapshot().filter { $0.request.url.host == "stub.test" }
+        #expect(hops.map(\.request.url.path) == ["/new", "/old"])
+        #expect(hops.map { $0.timing != nil } == [true, true])
+    }
+
+    @Test("a mocked answer is timed as the rule's delay")
+    func mockedTiming() async throws {
+        try CatWalk.mock(CWMockRule.get("/fast").respond(delay: 0.1))
+
+        _ = try await session.data(from: baseURL.appendingPathComponent("fast"))
+
+        let timing = try #require(engine.store.snapshot().first?.timing)
+        #expect(timing.fetchType == .mocked)
+        #expect(timing.waiting?.duration == 0.1)
+    }
+
     @Test("the mock delay is honoured")
     func mockedDelay() async throws {
         try CatWalk.mock(CWMockRule.get("/slow").respond(delay: 0.3))
@@ -136,7 +160,7 @@ final class CWURLProtocolTests {
 
         let (data, response) = try await session.data(from: baseURL.appendingPathComponent("old"))
 
-        let snapshot = engine.store.snapshot()
+        let snapshot = engine.store.snapshot().filter { $0.request.url.host == "stub.test" }
         #expect(data == Data("done".utf8))
         #expect(response.url?.path == "/new")
         #expect(snapshot.map { $0.request.url.path } == ["/new", "/old"])

@@ -153,5 +153,24 @@ struct CWTransactionStoreTests {
         #expect(received == [.upserted(first.id), .cleared])
         cancellable.cancel()
     }
+
+    @Test("update replaces a stored transaction in place and ignores evicted ones")
+    func updateInPlace() throws {
+        let store = CWTransactionStore(capacity: 2)
+        let first = TransactionFixtures.make("GET", "https://a.test/1")
+        let second = TransactionFixtures.make("GET", "https://a.test/2")
+        let third = TransactionFixtures.make("GET", "https://a.test/3")
+        store.upsert(first)
+        store.upsert(second)
+        let timing = CWTiming.mocked(startingAt: Date(), delay: 1)
+
+        store.update(id: second.id) { $0.withConnectionDetails(tls: nil, timing: timing) }
+        store.upsert(third)
+        store.update(id: first.id) { $0.withConnectionDetails(tls: nil, timing: timing) }
+
+        #expect(store.snapshot().map(\.id) == [third.id, second.id])
+        #expect(store.transaction(id: second.id)?.timing == timing)
+        #expect(store.transaction(id: first.id) == nil)
+    }
 }
 #endif

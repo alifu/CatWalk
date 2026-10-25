@@ -37,8 +37,38 @@ enum CWPreviewFixtures {
             url: request.url!, statusCode: status, httpVersion: "HTTP/1.1",
             headerFields: ["Content-Type": "application/json", "Set-Cookie": "session=abc; Path=/; Secure; HttpOnly"]
         )
-        return recorder.complete(begun, response: response, body: CWBody(capturing: Data(json.utf8), limit: 1 << 20), error: nil)
+        return recorder.complete(
+            begun,
+            response: response,
+            body: CWBody(capturing: Data(json.utf8), limit: 1 << 20),
+            error: nil,
+            timing: sampleTiming(from: begun.startDate)
+        )
     }
+}
+
+extension CWPreviewFixtures {
+
+    /// DNS 20 ms, connect 60 ms (TLS 40 ms), send 5 ms, wait 120 ms, receive 30 ms.
+    static func sampleTiming(from start: Date) -> CWTiming {
+        func interval(_ from: Double, _ to: Double) -> DateInterval {
+            DateInterval(start: start.addingTimeInterval(from), end: start.addingTimeInterval(to))
+        }
+        return CWTiming(
+            fetchStart: start,
+            domainLookup: interval(0, 0.020),
+            connect: interval(0.020, 0.080),
+            secureConnection: interval(0.040, 0.080),
+            request: interval(0.080, 0.085),
+            waiting: interval(0.085, 0.205),
+            response: interval(0.205, 0.235),
+            fetchType: .network
+        )
+    }
+}
+
+#Preview("Timing") {
+    CWTimingView(timing: CWPreviewFixtures.sampleTiming(from: Date())).padding()
 }
 
 #Preview("Row") {

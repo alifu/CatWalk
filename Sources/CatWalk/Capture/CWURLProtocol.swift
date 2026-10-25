@@ -175,8 +175,17 @@ final class CWURLProtocol: URLProtocol, CWSessionBridgeClient, URLAuthentication
         client.urlProtocol(self, didReceive: URLAuthenticationChallenge(authenticationChallenge: challenge, sender: self))
     }
 
+    /// Usually arrives before completion. For a redirect hop it arrives after the hop was
+    /// recorded, so the stored transaction is updated in place.
     func bridgeDidCollect(_ metrics: CWConnectionMetrics) {
-        state.withLock { $0.connection = metrics }
+        let snapshot = state.withLock { state -> LoadState? in
+            state.connection = metrics
+            return state.isFinished ? state : nil
+        }
+        guard let snapshot, let id = snapshot.transaction?.id else { return }
+
+        let tls = snapshot.transaction.flatMap { tlsInfo(for: $0.request.url, from: snapshot) }
+        engine.store.update(id: id) { $0.withConnectionDetails(tls: tls, timing: metrics.timing) }
     }
 
     func bridgeDidComplete(with error: (any Error)?) {
@@ -291,7 +300,7 @@ private extension CWURLProtocol {
 
         let body = mock.body.isEmpty ? nil : CWBody(capturing: mock.body, limit: recorder.configuration.maxBodyBytes)
         let completed = recorder.complete(transaction, response: httpResponse, body: body, error: error)
-        engine.store.upsert(completed.markedMocked())
+        engine.store.upsert(completed.markedMocked(timing: .mocked(startingAt: transaction.startDate, delay: mock.delay)))
         guard shouldNotify else { return }
 
         if let error {
@@ -323,7 +332,14 @@ private extension CWURLProtocol {
         guard let (recorder, transaction, finalResponse, body, snapshot) = pending else { return false }
 
         let tls = tlsInfo(for: transaction.request.url, from: snapshot)
-        engine.store.upsert(recorder.complete(transaction, response: finalResponse, body: body, error: error, tls: tls))
+        engine.store.upsert(recorder.complete(
+            transaction,
+            response: finalResponse,
+            body: body,
+            error: error,
+            tls: tls,
+            timing: snapshot.connection?.timing
+        ))
         return !snapshot.isStopped
     }
 

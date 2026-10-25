@@ -79,6 +79,20 @@ final class CWTransactionStore: @unchecked Sendable {
         }
     }
 
+    /// Replaces a stored transaction with `transform(old)`; does nothing if it was evicted. O(1).
+    func update(id: UUID, _ transform: (CWTransaction) -> CWTransaction) {
+        let updated = storage.withLock { storage -> Bool in
+            guard let sequence = storage.sequenceByID[id], let old = storage.ring.element(at: sequence) else {
+                return false
+            }
+            insert(transform(old), into: &storage)
+            return true
+        }
+        if updated {
+            subject.send(.upserted(id))
+        }
+    }
+
     /// Applies new limits, keeping the newest transactions that still fit.
     func configure(capacity: Int, maxTotalBodyBytes: Int) {
         storage.withLock { storage in

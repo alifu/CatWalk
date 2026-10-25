@@ -10,7 +10,8 @@ It can also answer requests with mock responses. Everything is kept in memory an
 - Captures `URLSession.shared` and custom sessions (Alamofire and others), including POST bodies and redirects
 - TLS version, cipher suite and certificate chain with SHA-256 and SPKI pinning hashes. Your own SSL pinning keeps deciding.
 - Mock rules (exact, path, prefix, contains, regex), editable in the app and created from a captured response
-- Filters, JSON tree, copy as cURL, HAR export, request replay
+- Timing waterfall per request: DNS, connect, TLS, send, wait, receive
+- Filters, JSON tree, copy as cURL, HAR export (with timings), request replay
 - Compiled out of Release builds by default
 
 ## Install
@@ -114,7 +115,6 @@ CatWalk is a `URLProtocol`, so like netfox it does not see:
 
 - `URLSessionWebSocketTask`, background sessions, `AVPlayer`, or `WKWebView` traffic
 - sessions created before `CatWalk.start` (unless they use `URLSession.shared`)
-- timing breakdowns (DNS, connect, TLS): only total duration is shown
 
 ## Development
 

@@ -38,6 +38,9 @@ public struct CWTransaction: Sendable, Identifiable, Equatable {
     /// `nil` for plain HTTP, and until the exchange finishes.
     public let tls: CWTLSInfo?
 
+    /// Phase breakdown; `nil` until the system reports metrics (they can arrive after completion).
+    public let timing: CWTiming?
+
     /// Lowercased "method url status", built once per state for O(1)-setup search.
     let searchKey: String
 
@@ -65,7 +68,8 @@ public struct CWTransaction: Sendable, Identifiable, Equatable {
             responseCookies: [],
             endDate: nil,
             error: nil,
-            tls: nil
+            tls: nil,
+            timing: nil
         )
     }
 
@@ -79,7 +83,8 @@ public struct CWTransaction: Sendable, Identifiable, Equatable {
         responseCookies: [CWCookie],
         endDate: Date?,
         error: CWTransactionError?,
-        tls: CWTLSInfo?
+        tls: CWTLSInfo?,
+        timing: CWTiming?
     ) {
         self.id = id
         self.state = state
@@ -91,6 +96,7 @@ public struct CWTransaction: Sendable, Identifiable, Equatable {
         self.endDate = endDate
         self.error = error
         self.tls = tls
+        self.timing = timing
         self.searchKey = Self.makeSearchKey(request: request, response: response)
     }
 }
@@ -103,9 +109,10 @@ extension CWTransaction {
         response: CWHTTPResponse?,
         responseCookies: [CWCookie],
         tls: CWTLSInfo? = nil,
+        timing: CWTiming? = nil,
         at date: Date
     ) -> CWTransaction {
-        finished(.completed, response: response, responseCookies: responseCookies, error: nil, tls: tls, at: date)
+        finished(.completed, response: response, responseCookies: responseCookies, error: nil, tls: tls, timing: timing, at: date)
     }
 
     func failed(
@@ -113,25 +120,20 @@ extension CWTransaction {
         response: CWHTTPResponse?,
         responseCookies: [CWCookie],
         tls: CWTLSInfo? = nil,
+        timing: CWTiming? = nil,
         at date: Date
     ) -> CWTransaction {
-        finished(.failed, response: response, responseCookies: responseCookies, error: error, tls: tls, at: date)
+        finished(.failed, response: response, responseCookies: responseCookies, error: error, tls: tls, timing: timing, at: date)
     }
 
-    /// Same exchange, flagged as answered by a mock rule.
-    func markedMocked() -> CWTransaction {
-        CWTransaction(
-            id: id,
-            state: .mocked,
-            request: request,
-            requestCookies: requestCookies,
-            startDate: startDate,
-            response: response,
-            responseCookies: responseCookies,
-            endDate: endDate,
-            error: error,
-            tls: tls
-        )
+    /// Same exchange, flagged as answered by a mock rule, with the mock's own timing.
+    func markedMocked(timing: CWTiming? = nil) -> CWTransaction {
+        copy(state: .mocked, timing: timing ?? self.timing)
+    }
+
+    /// Adds details the system reports after the exchange was recorded (metrics of a redirect hop).
+    func withConnectionDetails(tls: CWTLSInfo?, timing: CWTiming?) -> CWTransaction {
+        copy(tls: tls ?? self.tls, timing: timing ?? self.timing)
     }
 
     private func finished(
@@ -140,6 +142,7 @@ extension CWTransaction {
         responseCookies: [CWCookie],
         error: CWTransactionError?,
         tls: CWTLSInfo?,
+        timing: CWTiming?,
         at date: Date
     ) -> CWTransaction {
         CWTransaction(
@@ -152,7 +155,30 @@ extension CWTransaction {
             responseCookies: responseCookies,
             endDate: date,
             error: error,
-            tls: tls
+            tls: tls,
+            timing: timing
+        )
+    }
+
+    private func copy(
+        state: State? = nil,
+        request: CWHTTPRequest? = nil,
+        response: CWHTTPResponse?? = nil,
+        tls: CWTLSInfo?? = nil,
+        timing: CWTiming?? = nil
+    ) -> CWTransaction {
+        CWTransaction(
+            id: id,
+            state: state ?? self.state,
+            request: request ?? self.request,
+            requestCookies: requestCookies,
+            startDate: startDate,
+            response: response ?? self.response,
+            responseCookies: responseCookies,
+            endDate: endDate,
+            error: error,
+            tls: tls ?? self.tls,
+            timing: timing ?? self.timing
         )
     }
 }
@@ -167,18 +193,7 @@ extension CWTransaction {
     }
 
     func strippingBodies() -> CWTransaction {
-        CWTransaction(
-            id: id,
-            state: state,
-            request: request.strippingBody(),
-            requestCookies: requestCookies,
-            startDate: startDate,
-            response: response?.strippingBody(),
-            responseCookies: responseCookies,
-            endDate: endDate,
-            error: error,
-            tls: tls
-        )
+        copy(request: request.strippingBody(), response: .some(response?.strippingBody()))
     }
 }
 

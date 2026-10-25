@@ -8,7 +8,7 @@ import Foundation
 import os
 
 /// Removes the disk logs written by pre-1.0 builds (`Application Support/APILogger/`).
-/// CatWalk is memory-only now, so leftover plaintext captures should not linger.
+/// CatWalk's bodies now live in temporary files that are wiped on each start, so leftover plaintext captures should not linger.
 enum CWLegacyStorageCleaner {
 
     private static let logger = Logger(subsystem: "com.catwalk", category: "storage")

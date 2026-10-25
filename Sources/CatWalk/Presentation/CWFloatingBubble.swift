@@ -98,10 +98,10 @@ final class CWFloatingBubble {
 
     private func makeButton() -> UIButton {
         let button = UIButton(type: .custom, primaryAction: UIAction { [weak self] _ in self?.onTap() })
-        button.setImage(CWIcon.image, for: .normal)
-        button.imageView?.contentMode = .scaleAspectFit
-        button.contentHorizontalAlignment = .fill
-        button.contentVerticalAlignment = .fill
+        button.setImage(CWIcon.image(pointSize: Self.diameter * 0.45), for: .normal)
+        button.tintColor = .white
+        button.backgroundColor = .systemIndigo
+        button.layer.cornerRadius = Self.diameter / 2
         button.layer.shadowColor = UIColor.black.cgColor
         button.layer.shadowOpacity = 0.3
         button.layer.shadowRadius = 6

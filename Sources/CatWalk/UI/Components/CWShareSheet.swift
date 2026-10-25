@@ -23,6 +23,10 @@ struct CWShareItem: Identifiable {
     let id = UUID()
     let items: [Any]
 
+    static func text(_ text: String) -> CWShareItem {
+        CWShareItem(items: [text])
+    }
+
     static func har(for transactions: [CWTransaction]) -> CWShareItem? {
         guard
             let data = try? CWHARExporter.data(for: transactions),

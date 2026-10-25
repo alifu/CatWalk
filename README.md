@@ -4,7 +4,7 @@
 
 An in-app network inspector for iOS, with no third-party dependencies. It captures the app's HTTP(S)
 traffic and shows it in a searchable list with request, response, headers, cookies and TLS details.
-It can also answer requests with mock responses. Everything is kept in memory and gone when the app exits.
+It can also answer requests with mock responses. Details are kept in memory and larger bodies in temporary files; the files are deleted as transactions are evicted, and any left over are removed on the next launch.
 
 - iOS 15+, Swift 6.2 toolchain, SwiftUI and UIKit hosts
 - Captures `URLSession.shared` and custom sessions (Alamofire and others), including POST bodies and redirects
@@ -147,7 +147,7 @@ Use `CWConfiguration(isEnabled:)` or `CatWalk.setEnabled(_:)` as a runtime kill 
 
 ## Privacy
 
-- Captured data lives in memory only. Nothing is written to disk, and everything is erased when the app exits.
+- Transaction details live in memory. Bodies of 4 KB or more are written to temporary files in the app's `tmp/CatWalk` folder (unencrypted, readable only by the app's sandbox), and each file is deleted when its transaction is evicted or cleared. Files left by an earlier run are removed on the next `start`.
 - `Authorization` and `Proxy-Authorization` values are replaced by a placeholder before they are stored.
   Add `Cookie` and `Set-Cookie` to `redactedHeaders` to hide cookie values too, or pass `[]` to see everything.
 - Request bodies and URLs are captured as sent. Don't ship a Release build with the trait on to end users.
@@ -183,4 +183,4 @@ AVPlayer media and web views, and shows whether the load-time install ran.
 xcodebuild test -scheme CatWalk -destination 'platform=iOS Simulator,name=iPhone 17'
 ```
 
-`docs/icon.svg` is the source of the icon; the asset catalog holds a vector PDF of the same artwork.
+`docs/icon.svg` and `docs/icon.png` are for this README only. The package ships no resources: the inspector and bubble draw an SF Symbol.

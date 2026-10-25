@@ -96,7 +96,7 @@ struct MainView: View {
     private var toolbar: some ToolbarContent {
         ToolbarItem(placement: .principal) {
             HStack(spacing: 6) {
-                CWIcon.swiftUIImage.resizable().frame(width: 22, height: 22).accessibilityHidden(true)
+                CWIcon.swiftUIImage.foregroundColor(.accentColor).accessibilityHidden(true)
                 Text("CatWalk").font(.headline)
             }
         }

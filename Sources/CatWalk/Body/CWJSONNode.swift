@@ -43,6 +43,36 @@ indirect enum CWJSONNode: Equatable, Sendable {
         }
     }
 
+    /// The subtree holding every key or scalar value that contains `needle` (case-insensitive),
+    /// or `nil` when nothing matches. One pass over the nodes: O(total characters).
+    /// A matching key keeps its whole subtree; filtered arrays become objects keyed by the original index.
+    func filtered(matching needle: String) -> CWJSONNode? {
+        switch self {
+        case let .object(members):
+            let kept = members.compactMap { member in
+                Self.matches(member.key, needle)
+                    ? member
+                    : member.node.filtered(matching: needle).map { Member(key: member.key, node: $0) }
+            }
+            return kept.isEmpty ? nil : .object(kept)
+        case let .array(items):
+            let kept = items.enumerated().compactMap { index, item in
+                item.filtered(matching: needle).map { Member(key: String(index), node: $0) }
+            }
+            return kept.isEmpty ? nil : .object(kept)
+        case let .string(text), let .number(text):
+            return Self.matches(text, needle) ? self : nil
+        case let .bool(flag):
+            return Self.matches(String(flag), needle) ? self : nil
+        case .null:
+            return Self.matches("null", needle) ? self : nil
+        }
+    }
+
+    private static func matches(_ text: String, _ needle: String) -> Bool {
+        text.range(of: needle, options: [.caseInsensitive, .literal]) != nil
+    }
+
     /// Number of direct children for containers, `nil` for scalars.
     var childCount: Int? {
         switch self {

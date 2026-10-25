@@ -7,17 +7,57 @@
 import SwiftUI
 
 /// Collapsible JSON. Containers show at most `childLimit` children to keep huge arrays responsive.
+/// A non-empty `query` shows only the matching keys and values, fully expanded.
 struct CWJSONTreeView: View {
 
+    private static let debounce: UInt64 = 250_000_000
+
+    private struct SearchResult {
+        let query: String
+        let node: CWJSONNode?
+    }
+
     let node: CWJSONNode
+    let query: String
+
+    @State private var result: SearchResult?
+
+    private var needle: String { query.trimmingCharacters(in: .whitespaces) }
 
     var body: some View {
-        ScrollView(.horizontal) {
-            LazyVStack(alignment: .leading, spacing: 4) {
-                CWJSONNodeView(key: nil, node: node, depth: 0)
+        Group {
+            if needle.isEmpty {
+                tree(node, expandsAll: false)
+            } else if let result, result.query == needle {
+                if let match = result.node {
+                    tree(match, expandsAll: true).id(needle)
+                } else {
+                    Text("No matches").font(.footnote).foregroundColor(.secondary)
+                }
+            } else {
+                ProgressView().frame(maxWidth: .infinity)
             }
-            .padding(.vertical, 4)
         }
+        .task(id: needle) { await search() }
+    }
+
+    private func tree(_ root: CWJSONNode, expandsAll: Bool) -> some View {
+        LazyVStack(alignment: .leading, spacing: 4) {
+            CWJSONNodeView(key: nil, node: root, depth: 0, expandsAll: expandsAll)
+        }
+        .padding(.vertical, 4)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// Debounced, cancelled by the next keystroke, and run off the main thread.
+    private func search() async {
+        guard !needle.isEmpty else { return }
+        let target = needle
+        let root = node
+        do { try await Task.sleep(nanoseconds: Self.debounce) } catch { return }
+        let match = await Task.detached(priority: .userInitiated) { root.filtered(matching: target) }.value
+        guard !Task.isCancelled else { return }
+        result = SearchResult(query: target, node: match)
     }
 }
 
@@ -28,14 +68,16 @@ private struct CWJSONNodeView: View {
     let key: String?
     let node: CWJSONNode
     let depth: Int
+    let expandsAll: Bool
 
     @State private var isExpanded: Bool
 
-    init(key: String?, node: CWJSONNode, depth: Int) {
+    init(key: String?, node: CWJSONNode, depth: Int, expandsAll: Bool) {
         self.key = key
         self.node = node
         self.depth = depth
-        _isExpanded = State(initialValue: depth < 1)
+        self.expandsAll = expandsAll
+        _isExpanded = State(initialValue: expandsAll || depth < 1)
     }
 
     var body: some View {
@@ -51,14 +93,15 @@ private struct CWJSONNodeView: View {
     }
 
     private var label: some View {
-        HStack(spacing: 4) {
-            if let key {
-                Text(key + ":").foregroundColor(.purple)
-            }
-            Text(node.summary).foregroundColor(color)
-        }
-        .font(.system(.footnote, design: .monospaced))
-        .textSelection(.enabled)
+        (keyText + Text(node.summary).foregroundColor(color))
+            .font(.system(.footnote, design: .monospaced))
+            .textSelection(.enabled)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var keyText: Text {
+        key.map { Text($0 + ": ").foregroundColor(.purple) } ?? Text("")
     }
 
     @ViewBuilder
@@ -66,12 +109,12 @@ private struct CWJSONNodeView: View {
         switch node {
         case let .object(members):
             ForEach(Array(members.prefix(Self.childLimit).enumerated()), id: \.offset) { _, member in
-                CWJSONNodeView(key: member.key, node: member.node, depth: depth + 1)
+                CWJSONNodeView(key: member.key, node: member.node, depth: depth + 1, expandsAll: expandsAll)
             }
             overflow(members.count)
         case let .array(items):
             ForEach(Array(items.prefix(Self.childLimit).enumerated()), id: \.offset) { index, item in
-                CWJSONNodeView(key: String(index), node: item, depth: depth + 1)
+                CWJSONNodeView(key: String(index), node: item, depth: depth + 1, expandsAll: expandsAll)
             }
             overflow(items.count)
         default:

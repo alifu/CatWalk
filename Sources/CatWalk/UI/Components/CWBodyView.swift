@@ -7,22 +7,41 @@
 import SwiftUI
 import UIKit
 
-/// A captured body as JSON tree (with a raw toggle), text, image or hex dump.
+/// A captured body as JSON tree (searchable, with a raw toggle), text, image or hex dump.
 struct CWBodyView: View {
 
     let captured: CWBody?
     let mimeType: String?
 
-    @State private var showsRawJSON = false
+    /// Raw text beyond this is never laid out inline; a button opens it in a modal.
+    static let inlineRawLimit = 1000
 
-    private var preview: CWBodyPreview { CWBodyPreview.make(for: captured, mimeType: mimeType) }
+    @State private var preview: CWBodyPreview?
+    @State private var showsRawJSON = false
+    @State private var showsFormatted = false
+    @State private var query = ""
+
+    /// Changes only when the captured bytes change, so the preview is built once per body.
+    private var identity: [Int] { [captured?.totalBytes ?? 0, captured?.storedBytes ?? 0] }
+
+    /// O(1): compares the stored byte count; the text itself is never measured.
+    private var isLargeRaw: Bool { (captured?.storedBytes ?? 0) > Self.inlineRawLimit }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             if let captured, captured.totalBytes > 0 {
                 header(captured)
             }
-            content
+            if let preview {
+                content(preview)
+            } else {
+                ProgressView().frame(maxWidth: .infinity)
+            }
+        }
+        .task(id: identity) {
+            let body = captured
+            let mime = mimeType
+            preview = await Task.detached(priority: .userInitiated) { CWBodyPreview.make(for: body, mimeType: mime) }.value
         }
     }
 
@@ -30,7 +49,7 @@ struct CWBodyView: View {
         HStack {
             Text(CWFormat.bytes(body.totalBytes)).font(.caption).foregroundColor(.secondary)
             if body.isTruncated {
-                Text("truncated to \(CWFormat.bytes(body.data.count))").font(.caption).foregroundColor(.orange)
+                Text("truncated to \(CWFormat.bytes(body.storedBytes))").font(.caption).foregroundColor(.orange)
             }
             Spacer()
             if case .json = preview {
@@ -49,16 +68,24 @@ struct CWBodyView: View {
     }
 
     @ViewBuilder
-    private var content: some View {
+    private func content(_ preview: CWBodyPreview) -> some View {
         switch preview {
         case .empty:
             Text("No body").foregroundColor(.secondary)
         case let .purged(totalBytes):
             Text("Body of \(CWFormat.bytes(totalBytes)) was released after a memory warning.").foregroundColor(.secondary)
         case let .json(node, pretty):
-            if showsRawJSON { codeText(pretty) } else { CWJSONTreeView(node: node) }
+            if showsRawJSON {
+                rawText(pretty)
+            } else {
+                TextField("Search keys and values", text: $query)
+                    .textFieldStyle(.roundedBorder)
+                    .autocapitalization(.none)
+                    .disableAutocorrection(true)
+                CWJSONTreeView(node: node, query: query)
+            }
         case let .text(text):
-            codeText(text)
+            rawText(text)
         case let .image(data):
             if let image = UIImage(data: data) {
                 Image(uiImage: image).resizable().scaledToFit().accessibilityLabel("Response image")
@@ -78,12 +105,25 @@ struct CWBodyView: View {
         }
     }
 
-    private func codeText(_ text: String) -> some View {
-        ScrollView(.horizontal) {
-            Text(text)
-                .font(.system(.footnote, design: .monospaced))
-                .textSelection(.enabled)
+    /// Inline for short bodies; long ones open formatted in a modal.
+    @ViewBuilder
+    private func rawText(_ text: String) -> some View {
+        if isLargeRaw {
+            Button { showsFormatted = true } label: {
+                Label("Show formatted body", systemImage: "arrow.up.left.and.arrow.down.right")
+            }
+            .buttonStyle(.bordered)
+            .sheet(isPresented: $showsFormatted) { CWRawBodyView(title: "Body", text: text) }
+        } else {
+            codeText(text)
         }
+    }
+
+    private func codeText(_ text: String) -> some View {
+        Text(text)
+            .font(.system(.footnote, design: .monospaced))
+            .textSelection(.enabled)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 #endif

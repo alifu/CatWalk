@@ -83,6 +83,7 @@ final class CWCaptureEngine: Sendable {
 
         store.configure(capacity: configuration.maxTransactions, maxTotalBodyBytes: configuration.maxTotalBodyBytes)
         CWLegacyStorageCleaner.cleanOnce()
+        CWBodyFile.removeStaleFiles()
         observeMemoryWarnings()
 
         let (previousBridge, wasRunning) = runtime.withLock { runtime in
@@ -159,7 +160,7 @@ final class CWCaptureEngine: Sendable {
 
     private let memoryWarningObserver = CWLocked<(any NSObjectProtocol)?>(nil)
 
-    /// Frees captured bodies of finished transactions when the system runs low on memory.
+    /// Frees in-memory bodies of finished transactions when the system runs low on memory (bodies on disk stay).
     private func observeMemoryWarnings() {
         #if canImport(UIKit)
         memoryWarningObserver.withLock { observer in

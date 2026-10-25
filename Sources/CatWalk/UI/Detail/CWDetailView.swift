@@ -34,14 +34,15 @@ struct CWDetailView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Picker("Section", selection: $tab) {
-                ForEach(Tab.tabs(for: transaction)) { Text($0.rawValue).tag($0) }
-            }
-            .pickerStyle(.segmented)
-            .padding()
+            CWTabBar(tabs: Tab.tabs(for: transaction), selection: $tab)
+                .padding()
 
             if let transaction {
-                ScrollView { content(for: transaction).padding([.horizontal, .bottom]) }
+                ScrollView {
+                    content(for: transaction)
+                        .padding([.horizontal, .bottom])
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
             } else {
                 Spacer()
                 Text("This request is no longer stored.").foregroundColor(.secondary)
@@ -63,8 +64,16 @@ struct CWDetailView: View {
     private func content(for transaction: CWTransaction) -> some View {
         switch tab {
         case .overview: CWOverviewTab(transaction: transaction)
-        case .request: CWPayloadTab(captured: transaction.request.body, mimeType: transaction.request.headers["Content-Type"])
-        case .response: CWPayloadTab(captured: transaction.response?.body, mimeType: transaction.response?.mimeType)
+        case .request:
+            CWPayloadTab(
+                headersTitle: "Request headers", headers: transaction.request.headers,
+                captured: transaction.request.body, mimeType: transaction.request.headers["Content-Type"]
+            )
+        case .response:
+            CWPayloadTab(
+                headersTitle: "Response headers", headers: transaction.response?.headers,
+                captured: transaction.response?.body, mimeType: transaction.response?.mimeType
+            )
         case .messages: transaction.webSocket.map { CWWebSocketMessagesView(log: $0) }
         case .headers: CWHeadersTab(transaction: transaction)
         case .cookies: CWCookiesTab(transaction: transaction)
@@ -82,6 +91,9 @@ struct CWDetailView: View {
             }
             Button { shareItem = CWShareItem.har(for: [transaction]) } label: {
                 Label("Share HAR", systemImage: "square.and.arrow.up")
+            }
+            Button { shareItem = .text(CWShareText.all(transaction)) } label: {
+                Label("Share all", systemImage: "square.and.arrow.up.on.square")
             }
             if transaction.webSocket == nil, transaction.media == nil {
                 Button { replay(transaction) } label: { Label("Replay request", systemImage: "arrow.clockwise") }
@@ -104,6 +116,37 @@ struct CWDetailView: View {
 }
 
 // MARK: - Tabs
+
+/// Segmented-control look whose labels wrap onto extra lines instead of truncating.
+private struct CWTabBar: View {
+
+    let tabs: [CWDetailView.Tab]
+    @Binding var selection: CWDetailView.Tab
+
+    var body: some View {
+        HStack(spacing: 2) {
+            ForEach(tabs) { tab in
+                let isSelected = tab == selection
+                Button { selection = tab } label: {
+                    Text(tab.rawValue)
+                        .font(.footnote.weight(isSelected ? .semibold : .regular))
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .foregroundColor(.primary)
+                        .padding(.vertical, 6)
+                        .padding(.horizontal, 2)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(isSelected ? Color(.systemBackground) : .clear, in: RoundedRectangle(cornerRadius: 7))
+                }
+                .buttonStyle(.plain)
+                .accessibilityAddTraits(isSelected ? .isSelected : [])
+            }
+        }
+        .padding(2)
+        .background(Color(.secondarySystemFill), in: RoundedRectangle(cornerRadius: 9))
+        .fixedSize(horizontal: false, vertical: true)
+    }
+}
 
 private struct CWOverviewTab: View {
 
@@ -147,12 +190,27 @@ private struct CWOverviewTab: View {
     }
 }
 
+/// Headers above the body; an absent or empty header list is marked as such.
 private struct CWPayloadTab: View {
 
+    let headersTitle: String
+    let headers: CWHeaders?
     let captured: CWBody?
     let mimeType: String?
 
-    var body: some View { CWBodyView(captured: captured, mimeType: mimeType) }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(headersTitle).font(.headline)
+            if let headers, !headers.isEmpty {
+                ForEach(headers.entries, id: \.self) { CWKeyValueRow(name: $0.name, value: $0.value) }
+            } else {
+                Text(CWShareText.emptyMark).foregroundColor(.secondary)
+            }
+            Divider()
+            Text("Body").font(.headline)
+            CWBodyView(captured: captured, mimeType: mimeType)
+        }
+    }
 }
 
 private struct CWHeadersTab: View {
@@ -202,6 +260,7 @@ private struct CWCookiesTab: View {
                 VStack(alignment: .leading, spacing: 4) {
                     CWKeyValueRow(name: cookie.name, value: cookie.value)
                     Text(attributes(of: cookie)).font(.caption2).foregroundColor(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 Divider()
             }

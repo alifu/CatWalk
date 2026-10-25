@@ -137,7 +137,7 @@ public struct CWWebSocketLog: Sendable, Equatable {
     }
 
     private static func bytes(of frame: CWWebSocketFrame) -> Int {
-        frame.payload?.data.count ?? 0
+        frame.payload?.storedBytes ?? 0
     }
 }
 

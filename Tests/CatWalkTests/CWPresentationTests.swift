@@ -15,9 +15,9 @@ extension SharedEngine {
     @MainActor
     struct CWPresentationTests {
 
-        @Test("the vector icon loads from the package bundle")
+        @Test("the icon is an SF Symbol that needs no bundle")
         func iconLoads() {
-            #expect(CWIcon.image != nil)
+            #expect(CWIcon.image(pointSize: 20) != nil)
         }
 
         @Test("triggers: shake by default, manual is empty")

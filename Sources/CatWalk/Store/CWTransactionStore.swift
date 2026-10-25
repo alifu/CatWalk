@@ -7,7 +7,8 @@
 import Combine
 import Foundation
 
-/// In-memory transaction store. Nothing is written to disk; data dies with the process.
+/// Transaction store. Metadata is kept in memory; larger bodies live in temporary files (see `CWBody`).
+/// Everything is gone when the process exits.
 ///
 /// Bounded twice: by transaction count (ring buffer, oldest evicted first) and by total
 /// captured body bytes (`CWMemoryBudget`).

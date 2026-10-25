@@ -36,7 +36,6 @@ let package = Package(
         .target(
             name: "CatWalk",
             dependencies: ["CatWalkBootstrap"],
-            resources: [.process("Resources")],
             swiftSettings: inspectorSettings
         ),
         .testTarget(

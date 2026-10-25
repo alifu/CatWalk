@@ -7,17 +7,17 @@
 import SwiftUI
 import UIKit
 
-/// The CatWalk app icon (vector PDF in the package's asset catalog).
+/// The CatWalk mark: an SF Symbol, so the package ships no resource bundle.
 enum CWIcon {
 
-    static let name = "CatWalkIcon"
+    static let symbolName = "pawprint.fill"
 
-    static var image: UIImage? {
-        UIImage(named: name, in: .module, compatibleWith: nil)
+    static func image(pointSize: CGFloat) -> UIImage? {
+        UIImage(systemName: symbolName, withConfiguration: UIImage.SymbolConfiguration(pointSize: pointSize, weight: .semibold))
     }
 
     static var swiftUIImage: Image {
-        Image(name, bundle: .module)
+        Image(systemName: symbolName)
     }
 }
 #endif

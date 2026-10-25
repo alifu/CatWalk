@@ -257,7 +257,7 @@ extension CWTransaction {
 
     /// Captured bytes held by this transaction (request + response bodies, WebSocket payloads).
     var storedBodyBytes: Int {
-        (request.body?.data.count ?? 0) + (response?.body?.data.count ?? 0) + (webSocket?.storedBytes ?? 0)
+        (request.body?.storedBytes ?? 0) + (response?.body?.storedBytes ?? 0) + (webSocket?.storedBytes ?? 0)
     }
 
     func strippingBodies() -> CWTransaction {

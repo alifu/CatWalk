@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1024" y2="1024" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#4F46E5"/>
+      <stop offset="1" stop-color="#14B8A6"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="224" fill="url(#bg)"/>
+  <g fill="#fff">
+    <ellipse cx="512" cy="400" rx="120" ry="95"/>
+    <ellipse cx="352" cy="320" rx="40" ry="55" transform="rotate(-20 352 320)"/>
+    <ellipse cx="440" cy="235" rx="42" ry="58" transform="rotate(-7 440 235)"/>
+    <ellipse cx="584" cy="235" rx="42" ry="58" transform="rotate(7 584 235)"/>
+    <ellipse cx="672" cy="320" rx="40" ry="55" transform="rotate(20 672 320)"/>
+  </g>
+  <polyline points="120,700 330,700 400,600 470,780 540,560 610,700 904,700" fill="none" stroke="#fff" stroke-opacity="0.92" stroke-width="36" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -103,6 +103,9 @@ final class CWCaptureEngine: Sendable {
         }
         CWSessionConfigurationSwizzle.setInjecting(configuration.interceptCustomSessions)
         CWBackgroundSessionHook.install()
+        if configuration.captureWebSockets {
+            CWWebSocketHook.install()
+        }
         if configuration.interceptCustomSessions {
             CWSessionConfigurationSwizzle.install()
         }

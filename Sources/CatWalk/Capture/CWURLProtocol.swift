@@ -57,6 +57,15 @@ final class CWURLProtocol: URLProtocol, CWSessionBridgeClient, URLAuthentication
         return !CWCaptureEngine.shared.isIgnored(host: request.url?.host)
     }
 
+    /// WebSocket handshakes arrive as `http(s)` requests; loading one here would replace the upgrade
+    /// with a plain data task and break the socket. `CWWebSocketHook` observes those tasks instead.
+    override class func canInit(with task: URLSessionTask) -> Bool {
+        guard !CWWebSocketHook.isWebSocketTask(task), let request = task.currentRequest ?? task.originalRequest else {
+            return false
+        }
+        return canInit(with: request)
+    }
+
     override class func canonicalRequest(for request: URLRequest) -> URLRequest {
         request
     }

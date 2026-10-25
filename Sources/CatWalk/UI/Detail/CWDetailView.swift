@@ -11,9 +11,16 @@ import SwiftUI
 struct CWDetailView: View {
 
     enum Tab: String, CaseIterable, Identifiable {
-        case overview = "Overview", request = "Request", response = "Response"
+        case overview = "Overview", request = "Request", response = "Response", messages = "Messages"
         case headers = "Headers", cookies = "Cookies", ssl = "SSL"
         var id: String { rawValue }
+
+        /// WebSockets have messages instead of request/response bodies.
+        static func tabs(for transaction: CWTransaction?) -> [Tab] {
+            transaction?.webSocket == nil
+                ? [.overview, .request, .response, .headers, .cookies, .ssl]
+                : [.overview, .messages, .headers, .cookies, .ssl]
+        }
     }
 
     let transactionID: UUID
@@ -27,7 +34,7 @@ struct CWDetailView: View {
     var body: some View {
         VStack(spacing: 0) {
             Picker("Section", selection: $tab) {
-                ForEach(Tab.allCases) { Text($0.rawValue).tag($0) }
+                ForEach(Tab.tabs(for: transaction)) { Text($0.rawValue).tag($0) }
             }
             .pickerStyle(.segmented)
             .padding()
@@ -57,6 +64,7 @@ struct CWDetailView: View {
         case .overview: CWOverviewTab(transaction: transaction)
         case .request: CWPayloadTab(captured: transaction.request.body, mimeType: transaction.request.headers["Content-Type"])
         case .response: CWPayloadTab(captured: transaction.response?.body, mimeType: transaction.response?.mimeType)
+        case .messages: transaction.webSocket.map { CWWebSocketMessagesView(log: $0) }
         case .headers: CWHeadersTab(transaction: transaction)
         case .cookies: CWCookiesTab(transaction: transaction)
         case .ssl: CWSSLTab(tls: transaction.tls, isHTTPS: transaction.request.url.scheme == "https")
@@ -74,7 +82,9 @@ struct CWDetailView: View {
             Button { shareItem = CWShareItem.har(for: [transaction]) } label: {
                 Label("Share HAR", systemImage: "square.and.arrow.up")
             }
-            Button { replay(transaction) } label: { Label("Replay request", systemImage: "arrow.clockwise") }
+            if transaction.webSocket == nil {
+                Button { replay(transaction) } label: { Label("Replay request", systemImage: "arrow.clockwise") }
+            }
             if transaction.isMockable {
                 Button { mockDraft = CWMockDraftItem(CWMockDraft(from: transaction)) } label: {
                     Label("Mock this response", systemImage: "theatermasks")
@@ -110,8 +120,12 @@ private struct CWOverviewTab: View {
             if let duration = transaction.duration {
                 CWKeyValueRow(name: "Duration", value: CWFormat.duration(duration))
             }
-            CWKeyValueRow(name: "Request body", value: size(transaction.request.body))
-            CWKeyValueRow(name: "Response body", value: size(transaction.response?.body))
+            if let webSocket = transaction.webSocket {
+                CWWebSocketSummary(log: webSocket)
+            } else {
+                CWKeyValueRow(name: "Request body", value: size(transaction.request.body))
+                CWKeyValueRow(name: "Response body", value: size(transaction.response?.body))
+            }
             if let mime = transaction.response?.mimeType {
                 CWKeyValueRow(name: "Content type", value: mime)
             }

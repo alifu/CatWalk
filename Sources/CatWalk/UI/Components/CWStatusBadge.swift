@@ -12,6 +12,16 @@ extension CWTransaction.Source {
         switch self {
         case .urlSession: "App sessions"
         case .backgroundSession: "Background sessions"
+        case .webSocket: "WebSockets"
+        }
+    }
+
+    /// Short chip shown on rows that did not go through `URLProtocol`.
+    var chip: String? {
+        switch self {
+        case .urlSession: nil
+        case .backgroundSession: "BG"
+        case .webSocket: "WS"
         }
     }
 }
@@ -20,6 +30,7 @@ extension CWTransaction {
 
     var statusColor: Color {
         switch CWStatusClass(self) {
+        case .informational: .teal
         case .success: .green
         case .redirect: .blue
         case .clientError: .orange

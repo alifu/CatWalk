@@ -41,15 +41,18 @@ struct CWTransactionRow: View {
             if let size = transaction.response?.body?.totalBytes {
                 Text(CWFormat.bytes(size))
             }
+            if let webSocket = transaction.webSocket {
+                Text("\(webSocket.frames.count + webSocket.droppedFrameCount) msgs")
+            }
             if transaction.tls != nil {
                 Image(systemName: "lock.fill").accessibilityLabel("Secure connection")
             }
-            if transaction.source == .backgroundSession {
-                Text("BG")
+            if let chip = transaction.source.chip {
+                Text(chip)
                     .font(.caption2.weight(.bold))
                     .padding(.horizontal, 4)
                     .overlay(Capsule().stroke(Color.secondary))
-                    .accessibilityLabel("Background session")
+                    .accessibilityLabel(transaction.source.title)
             }
             if transaction.isMocked {
                 Image(systemName: "theatermasks.fill").foregroundColor(.purple).accessibilityLabel("Mocked")

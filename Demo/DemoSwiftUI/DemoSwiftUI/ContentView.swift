@@ -86,7 +86,8 @@ struct ContentView: View {
         .overlay(alignment: .bottomLeading) {
             HStack {
                 Button("Inspector") { showsInspector = true }
-                Button("Background download") { BackgroundDownloader.shared.download() }
+                Button("Background") { BackgroundDownloader.shared.download() }
+                Button("WebSocket") { WebSocketChat.shared.run() }
             }
             .buttonStyle(.borderedProminent)
             .padding()

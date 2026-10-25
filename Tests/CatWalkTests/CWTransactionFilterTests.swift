@@ -41,6 +41,15 @@ struct CWTransactionFilterTests {
         #expect(CWStatusClass(pending) == nil)
     }
 
+    @Test("101 Switching Protocols (an open WebSocket) is informational, not 2xx")
+    func informational() {
+        let socket = CWPreviewFixtures.socket
+
+        #expect(CWStatusClass(socket) == .informational)
+        #expect(CWTransactionFilter(statusClasses: [.success]).apply(to: [ok, socket]).map(\.id) == [ok.id])
+        #expect(CWTransactionFilter(source: .webSocket).apply(to: [ok, socket]).map(\.id) == [socket.id])
+    }
+
     @Test("method, host and hidden rows combine")
     func combined() {
         let filter = CWTransactionFilter(methods: ["GET"], host: "api.test", hiddenIDs: [ok.id])

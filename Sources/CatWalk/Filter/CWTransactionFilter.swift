@@ -8,12 +8,13 @@ import Foundation
 
 /// Coarse outcome of a transaction, as used by the filter chips.
 enum CWStatusClass: CaseIterable, Hashable, Sendable {
-    case success, redirect, clientError, serverError, failed
+    case informational, success, redirect, clientError, serverError, failed
 
     /// `nil` while the request is still in flight.
     init?(_ transaction: CWTransaction) {
         if let code = transaction.response?.statusCode {
             switch code {
+            case 100..<200: self = .informational
             case 200..<300: self = .success
             case 300..<400: self = .redirect
             case 400..<500: self = .clientError
@@ -29,6 +30,7 @@ enum CWStatusClass: CaseIterable, Hashable, Sendable {
 
     var title: String {
         switch self {
+        case .informational: "1xx"
         case .success: "2xx"
         case .redirect: "3xx"
         case .clientError: "4xx"

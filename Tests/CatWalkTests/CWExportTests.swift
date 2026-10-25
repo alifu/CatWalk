@@ -64,6 +64,21 @@ struct CWExportTests {
         #expect(text.contains("\"encoding\" : \"base64\""))
     }
 
+    @Test("HAR carries WebSocket messages in Chrome's _webSocketMessages")
+    func harWebSocket() throws {
+        let data = try CWHARExporter.data(for: [CWPreviewFixtures.socket])
+
+        let log = try #require((try JSONSerialization.jsonObject(with: data) as? [String: Any])?["log"] as? [String: Any])
+        let entry = try #require((log["entries"] as? [[String: Any]])?.first)
+        let messages = try #require(entry["_webSocketMessages"] as? [[String: Any]])
+        #expect(entry["_resourceType"] as? String == "websocket")
+        #expect(messages.map { $0["type"] as? String } == ["send", "receive", "send", "receive", "send", "receive"])
+        #expect(messages.map { $0["opcode"] as? Int } == [1, 1, 2, 2, 9, 10])
+        #expect(messages.first?["data"] as? String == #"{"type":"hello","user":1}"#)
+        #expect(messages[2]["data"] as? String == Data([0xDE, 0xAD, 0xBE, 0xEF]).base64EncodedString())
+        #expect((try #require(entry["response"] as? [String: Any]))["status"] as? Int == 101)
+    }
+
     @Test("replay drops redacted headers and truncated bodies")
     func replay() throws {
         let headers = CWHeaders(["Authorization": CWRedaction.placeholder, "X-Keep": "1"])

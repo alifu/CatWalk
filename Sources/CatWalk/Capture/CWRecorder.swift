@@ -80,21 +80,7 @@ struct CWRecorder: Sendable {
         timing: CWTiming? = nil,
         at date: Date = Date()
     ) -> CWTransaction {
-        let http = response as? HTTPURLResponse
-        let fields = http.map(Self.headerFields) ?? [:]
-
-        let httpResponse = http.map {
-            CWHTTPResponse(
-                statusCode: $0.statusCode,
-                headers: CWHeaders(fields).redacting(redactedHeaders),
-                body: body,
-                mimeType: $0.mimeType
-            )
-        }
-        let cookies = http.map {
-            CWCookieParser.responseCookies(headerFields: fields, url: $0.url ?? transaction.request.url)
-        } ?? []
-        let responseCookies = redact(cookies, header: "set-cookie")
+        let (httpResponse, responseCookies) = convert(response, body: body, requestURL: transaction.request.url)
 
         if let error {
             return transaction.failed(
@@ -113,6 +99,29 @@ struct CWRecorder: Sendable {
             timing: timing,
             at: date
         )
+    }
+}
+
+extension CWRecorder {
+
+    /// The WebSocket handshake response (101) of a still-open connection.
+    func handshake(_ transaction: CWTransaction, response: URLResponse) -> CWTransaction {
+        let (httpResponse, cookies) = convert(response, body: nil, requestURL: transaction.request.url)
+        return transaction.withHandshake(response: httpResponse, cookies: cookies)
+    }
+
+    /// Redacted response and its `Set-Cookie`s; `nil` for non-HTTP responses.
+    private func convert(_ response: URLResponse?, body: CWBody?, requestURL: URL) -> (CWHTTPResponse?, [CWCookie]) {
+        guard let http = response as? HTTPURLResponse else { return (nil, []) }
+        let fields = Self.headerFields(of: http)
+        let httpResponse = CWHTTPResponse(
+            statusCode: http.statusCode,
+            headers: CWHeaders(fields).redacting(redactedHeaders),
+            body: body,
+            mimeType: http.mimeType
+        )
+        let cookies = CWCookieParser.responseCookies(headerFields: fields, url: http.url ?? requestURL)
+        return (httpResponse, redact(cookies, header: "set-cookie"))
     }
 }
 

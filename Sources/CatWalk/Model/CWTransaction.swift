@@ -15,6 +15,8 @@ public struct CWTransaction: Sendable, Identifiable, Equatable {
         case urlSession
         /// Observed from a background session's delegate: read-only, appears when it finishes.
         case backgroundSession
+        /// A `URLSessionWebSocketTask`: handshake plus every message, read-only.
+        case webSocket
     }
 
     public enum State: Sendable, Equatable {
@@ -50,6 +52,9 @@ public struct CWTransaction: Sendable, Identifiable, Equatable {
 
     /// Phase breakdown; `nil` until the system reports metrics (they can arrive after completion).
     public let timing: CWTiming?
+
+    /// Messages of a WebSocket connection; `nil` for HTTP exchanges.
+    public let webSocket: CWWebSocketLog?
 
     /// Lowercased "method url status", built once per state for O(1)-setup search.
     let searchKey: String
@@ -100,7 +105,8 @@ public struct CWTransaction: Sendable, Identifiable, Equatable {
         error: CWTransactionError?,
         tls: CWTLSInfo?,
         timing: CWTiming?,
-        source: Source = .urlSession
+        source: Source = .urlSession,
+        webSocket: CWWebSocketLog? = nil
     ) {
         self.id = id
         self.state = state
@@ -114,6 +120,7 @@ public struct CWTransaction: Sendable, Identifiable, Equatable {
         self.tls = tls
         self.timing = timing
         self.source = source
+        self.webSocket = webSocket
         self.searchKey = Self.makeSearchKey(request: request, response: response)
     }
 }
@@ -157,6 +164,22 @@ extension CWTransaction {
         copy(source: source)
     }
 
+    /// The handshake request of a WebSocket, before any message.
+    func asWebSocket() -> CWTransaction {
+        copy(source: .webSocket, webSocket: .some(CWWebSocketLog()))
+    }
+
+    /// Handshake response of an open WebSocket; the exchange stays in flight.
+    func withHandshake(response: CWHTTPResponse?, cookies: [CWCookie]) -> CWTransaction {
+        copy(response: .some(response), responseCookies: cookies)
+    }
+
+    /// Changes the message log; HTTP transactions are returned unchanged.
+    func updatingWebSocket(_ transform: (CWWebSocketLog) -> CWWebSocketLog) -> CWTransaction {
+        guard let webSocket else { return self }
+        return copy(webSocket: .some(transform(webSocket)))
+    }
+
     private func finished(
         _ state: State,
         response: CWHTTPResponse?,
@@ -178,7 +201,8 @@ extension CWTransaction {
             error: error,
             tls: tls,
             timing: timing,
-            source: source
+            source: source,
+            webSocket: webSocket
         )
     }
 
@@ -186,9 +210,11 @@ extension CWTransaction {
         state: State? = nil,
         request: CWHTTPRequest? = nil,
         response: CWHTTPResponse?? = nil,
+        responseCookies: [CWCookie]? = nil,
         tls: CWTLSInfo?? = nil,
         timing: CWTiming?? = nil,
-        source: Source? = nil
+        source: Source? = nil,
+        webSocket: CWWebSocketLog?? = nil
     ) -> CWTransaction {
         CWTransaction(
             id: id,
@@ -197,12 +223,13 @@ extension CWTransaction {
             requestCookies: requestCookies,
             startDate: startDate,
             response: response ?? self.response,
-            responseCookies: responseCookies,
+            responseCookies: responseCookies ?? self.responseCookies,
             endDate: endDate,
             error: error,
             tls: tls ?? self.tls,
             timing: timing ?? self.timing,
-            source: source ?? self.source
+            source: source ?? self.source,
+            webSocket: webSocket ?? self.webSocket
         )
     }
 }
@@ -211,13 +238,17 @@ extension CWTransaction {
 
 extension CWTransaction {
 
-    /// Captured body bytes held by this transaction (request + response).
+    /// Captured bytes held by this transaction (request + response bodies, WebSocket payloads).
     var storedBodyBytes: Int {
-        (request.body?.data.count ?? 0) + (response?.body?.data.count ?? 0)
+        (request.body?.data.count ?? 0) + (response?.body?.data.count ?? 0) + (webSocket?.storedBytes ?? 0)
     }
 
     func strippingBodies() -> CWTransaction {
-        copy(request: request.strippingBody(), response: .some(response?.strippingBody()))
+        copy(
+            request: request.strippingBody(),
+            response: .some(response?.strippingBody()),
+            webSocket: .some(webSocket?.strippingData())
+        )
     }
 }
 

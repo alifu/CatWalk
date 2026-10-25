@@ -11,6 +11,7 @@ It can also answer requests with mock responses. Everything is kept in memory an
 - TLS version, cipher suite and certificate chain with SHA-256 and SPKI pinning hashes. Your own SSL pinning keeps deciding.
 - Mock rules (exact, path, prefix, contains, regex), editable in the app and created from a captured response
 - Background-session transfers, observed from the session delegate (read-only)
+- WebSocket connections (`URLSessionWebSocketTask`): handshake and every message in a chat-style Messages tab
 - Timing waterfall per request: DNS, connect, TLS, send, wait, receive
 - Filters, JSON tree, copy as cURL, HAR export (with timings), request replay
 - Compiled out of Release builds by default
@@ -69,6 +70,8 @@ CWConfiguration(
     maxTotalBodyBytes: 50 * 1024 * 1024,     // all captured bodies together
     ignoredHosts: ["*.analytics.example.com"],
     triggers: [.shake],
+    captureWebSockets: true,                 // record URLSessionWebSocketTask handshakes and messages
+    maxFramesPerConnection: 1000,            // per WebSocket; oldest messages are dropped first
     isEnabled: true                          // feed from a remote flag to switch CatWalk off
 )
 ```
@@ -120,9 +123,15 @@ the session delegate instead. Their rows carry a **BG** chip, appear only once t
 be mocked. Download bodies are read from the file before your delegate receives it; upload bodies come from the
 file passed to `uploadTask(with:fromFile:)`.
 
+WebSocket tasks don't go through `URLProtocol` either; CatWalk hooks the task's runtime class to record the
+handshake, sent and received messages (text, binary, ping/pong) and the close code. Rows carry a **WS** chip
+and can't be mocked. HAR export includes the messages in Chrome's `_webSocketMessages` format. If the peer
+closes the connection while the app has no `receive()` pending, the row stays open until the app's next call.
+
 CatWalk does not see:
 
-- `URLSessionWebSocketTask`, `AVPlayer`, or `WKWebView` traffic
+- `AVPlayer` or `WKWebView` traffic
+- Network.framework (`NWConnection`) and libraries built on it, such as Starscream's native engine
 - requests already running when `CatWalk.start` is called, and sessions whose `protocolClasses` the app sets itself
 
 ## Development

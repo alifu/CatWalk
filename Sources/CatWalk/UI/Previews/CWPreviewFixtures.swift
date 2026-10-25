@@ -15,7 +15,8 @@ enum CWPreviewFixtures {
     static let created = make("POST", "https://dummyjson.com/carts/add", status: 201, json: #"{"id":51}"#, requestBody: #"{"userId":1}"#)
     static let notFound = make("GET", "https://dummyjson.com/missing", status: 404, json: #"{"message":"Not found"}"#)
     static let failed = make("GET", "https://offline.test/ping", status: nil, json: nil)
-    static let all = [ok, created, notFound, failed]
+    static let socket = makeSocket()
+    static let all = [ok, created, notFound, failed, socket]
 
     /// A store holding `all`, for views that read from it.
     static func store() -> CWTransactionStore {
@@ -49,6 +50,31 @@ enum CWPreviewFixtures {
 
 extension CWPreviewFixtures {
 
+    /// A closed chat socket: a JSON text echo, a binary echo, ping/pong, closed by the app with 1000.
+    private static func makeSocket() -> CWTransaction {
+        let recorder = CWRecorder(configuration: .default)
+        let url = URL(string: "wss://ws.postman-echo.com/raw")!
+        let begun = recorder.begin(URLRequest(url: url), body: nil)!.asWebSocket()
+        let handshake = HTTPURLResponse(
+            url: url, statusCode: 101, httpVersion: "HTTP/1.1",
+            headerFields: ["Upgrade": "websocket", "Connection": "Upgrade"]
+        )!
+        let json = CWBody(capturing: Data(#"{"type":"hello","user":1}"#.utf8), limit: 1 << 20)
+        let binary = CWBody(capturing: Data([0xDE, 0xAD, 0xBE, 0xEF]), limit: 1 << 20)
+        let frames = [
+            CWWebSocketFrame(direction: .sent, kind: .text, payload: json),
+            CWWebSocketFrame(direction: .received, kind: .text, payload: json),
+            CWWebSocketFrame(direction: .sent, kind: .binary, payload: binary),
+            CWWebSocketFrame(direction: .received, kind: .binary, payload: binary),
+            CWWebSocketFrame(direction: .sent, kind: .ping),
+            CWWebSocketFrame(direction: .received, kind: .pong),
+        ]
+        let open = recorder.handshake(begun, response: handshake)
+            .updatingWebSocket { frames.reduce($0) { $0.appending($1, maxFrames: 100) } }
+        return recorder.complete(open, response: handshake, body: nil, error: nil)
+            .updatingWebSocket { $0.closed(code: 1000, reason: nil) }
+    }
+
     /// DNS 20 ms, connect 60 ms (TLS 40 ms), send 5 ms, wait 120 ms, receive 30 ms.
     static func sampleTiming(from start: Date) -> CWTiming {
         func interval(_ from: Double, _ to: Double) -> DateInterval {
@@ -77,6 +103,10 @@ extension CWPreviewFixtures {
 
 #Preview("Detail") {
     NavigationView { CWDetailView(transactionID: CWPreviewFixtures.ok.id, store: CWPreviewFixtures.store()) }
+}
+
+#Preview("WebSocket messages") {
+    NavigationView { ScrollView { CWWebSocketMessagesView(log: CWPreviewFixtures.socket.webSocket!).padding() } }
 }
 
 #Preview("Mock editor") {

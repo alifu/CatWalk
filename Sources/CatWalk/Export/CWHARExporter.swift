@@ -20,7 +20,7 @@ enum CWHARExporter {
 
     private static func entry(_ transaction: CWTransaction) -> [String: Any] {
         let elapsedMilliseconds = (transaction.duration ?? 0) * 1000
-        return [
+        let entry: [String: Any] = [
             "startedDateTime": transaction.startDate.formatted(Date.ISO8601FormatStyle(includingFractionalSeconds: true)),
             "time": elapsedMilliseconds,
             "request": request(transaction),
@@ -28,6 +28,32 @@ enum CWHARExporter {
             "cache": [String: Any](),
             "timings": timings(transaction.timing, elapsedMilliseconds: elapsedMilliseconds),
         ]
+        guard let webSocket = transaction.webSocket else { return entry }
+        return entry.merging([
+            "_resourceType": "websocket",
+            "_webSocketMessages": webSocket.frames.map(message),
+        ]) { _, new in new }
+    }
+
+    /// Chrome's HAR extension for WebSocket messages; `time` is seconds since 1970.
+    private static func message(_ frame: CWWebSocketFrame) -> [String: Any] {
+        let data = frame.payload?.data ?? Data()
+        return [
+            "type": frame.direction == .sent ? "send" : "receive",
+            "time": frame.date.timeIntervalSince1970,
+            "opcode": opcode(frame.kind),
+            "data": frame.kind == .text ? String(decoding: data, as: UTF8.self) : data.base64EncodedString(),
+        ]
+    }
+
+    /// RFC 6455 §5.2 opcodes.
+    private static func opcode(_ kind: CWWebSocketFrame.Kind) -> Int {
+        switch kind {
+        case .text: 1
+        case .binary: 2
+        case .ping: 9
+        case .pong: 10
+        }
     }
 
     /// HAR uses -1 for phases that did not happen; `connect` includes `ssl`.

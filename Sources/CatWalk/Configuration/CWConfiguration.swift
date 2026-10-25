@@ -16,6 +16,8 @@ public struct CWConfiguration: Sendable {
 
     public static let defaultMaxTotalBodyBytes = 50 * 1024 * 1024
 
+    public static let defaultMaxFramesPerConnection = 1000
+
     public static let defaultRedactedHeaders: Set<String> = ["Authorization", "Proxy-Authorization"]
 
     /// Bytes kept per request/response body; the full body is still delivered to the app.
@@ -42,6 +44,12 @@ public struct CWConfiguration: Sendable {
     /// What opens the inspector. Default: shake. Use `[]` to open it only from your own code.
     public var triggers: CWTrigger
 
+    /// Record `URLSessionWebSocketTask` handshakes and messages (read-only; never changes what is sent).
+    public var captureWebSockets: Bool
+
+    /// Messages kept per WebSocket connection; the oldest are dropped first.
+    public var maxFramesPerConnection: Int
+
     /// `false` turns CatWalk off without removing it: `start` does nothing. Feed it from a remote flag.
     public var isEnabled: Bool
 
@@ -53,6 +61,8 @@ public struct CWConfiguration: Sendable {
         maxTotalBodyBytes: Int = CWConfiguration.defaultMaxTotalBodyBytes,
         ignoredHosts: [String] = [],
         triggers: CWTrigger = [.shake],
+        captureWebSockets: Bool = true,
+        maxFramesPerConnection: Int = CWConfiguration.defaultMaxFramesPerConnection,
         isEnabled: Bool = true
     ) {
         self.maxBodyBytes = max(0, maxBodyBytes)
@@ -60,6 +70,8 @@ public struct CWConfiguration: Sendable {
         self.maxTotalBodyBytes = max(0, maxTotalBodyBytes)
         self.ignoredHosts = ignoredHosts
         self.triggers = triggers
+        self.captureWebSockets = captureWebSockets
+        self.maxFramesPerConnection = max(1, maxFramesPerConnection)
         self.isEnabled = isEnabled
         self.redactedHeaders = redactedHeaders
         self.interceptCustomSessions = interceptCustomSessions

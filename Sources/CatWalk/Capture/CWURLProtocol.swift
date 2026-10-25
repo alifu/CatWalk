@@ -25,7 +25,7 @@ final class CWURLProtocol: URLProtocol, CWSessionBridgeClient, URLAuthentication
         let completion: ChallengeCompletion
     }
 
-    private struct LoadState {
+    private final class LoadState {
         var recorder: CWRecorder?
         var transaction: CWTransaction?
         var response: URLResponse?
@@ -37,6 +37,18 @@ final class CWURLProtocol: URLProtocol, CWSessionBridgeClient, URLAuthentication
         var connection: CWConnectionMetrics?
         var isStopped = false
         var isFinished = false
+
+        /// What `tlsInfo` needs, so a snapshot taken under the lock does not copy the whole state.
+        var finish: Finish {
+            Finish(certificates: certificates, trustDecision: trustDecision, connection: connection, isStopped: isStopped)
+        }
+    }
+
+    private struct Finish {
+        let certificates: [CWCertificate]
+        let trustDecision: CWTrustDecision?
+        let connection: CWConnectionMetrics?
+        let isStopped: Bool
     }
 
     private let state = CWLocked(LoadState())
@@ -58,9 +70,9 @@ final class CWURLProtocol: URLProtocol, CWSessionBridgeClient, URLAuthentication
     }
 
     /// WebSocket handshakes arrive as `http(s)` requests; loading one here would replace the upgrade
-    /// with a plain data task and break the socket. `CWWebSocketHook` observes those tasks instead.
+    /// with a plain data task and break the socket. `CWWebSocketHook` observes those tasks instead (unless compiled out).
     override class func canInit(with task: URLSessionTask) -> Bool {
-        guard !CWWebSocketHook.isWebSocketTask(task), let request = task.currentRequest ?? task.originalRequest else {
+        guard !CWTaskKind.isWebSocket(task), let request = task.currentRequest ?? task.originalRequest else {
             return false
         }
         return canInit(with: request)
@@ -187,13 +199,15 @@ final class CWURLProtocol: URLProtocol, CWSessionBridgeClient, URLAuthentication
     /// Usually arrives before completion. For a redirect hop it arrives after the hop was
     /// recorded, so the stored transaction is updated in place.
     func bridgeDidCollect(_ metrics: CWConnectionMetrics) {
-        let snapshot = state.withLock { state -> LoadState? in
+        let snapshot = state.withLock { state -> (id: UUID, url: URL, finish: Finish)? in
             state.connection = metrics
-            return state.isFinished ? state : nil
+            guard state.isFinished, let transaction = state.transaction else { return nil }
+            return (transaction.id, transaction.request.url, state.finish)
         }
-        guard let snapshot, let id = snapshot.transaction?.id else { return }
+        guard let snapshot else { return }
 
-        let tls = snapshot.transaction.flatMap { tlsInfo(for: $0.request.url, from: snapshot) }
+        let id = snapshot.id
+        let tls = tlsInfo(for: snapshot.url, from: snapshot.finish)
         engine.store.update(id: id) { $0.withConnectionDetails(tls: tls, timing: metrics.timing) }
     }
 
@@ -331,12 +345,12 @@ private extension CWURLProtocol {
     /// Stores the finished transaction exactly once.
     /// - Returns: `true` when the client should be told about the outcome.
     func recordCompletion(response: URLResponse?, error: (any Error)?) -> Bool {
-        let pending = state.withLock { state -> (CWRecorder, CWTransaction, URLResponse?, CWBody?, LoadState)? in
+        let pending = state.withLock { state -> (CWRecorder, CWTransaction, URLResponse?, CWBody?, Finish)? in
             guard !state.isFinished, let recorder = state.recorder, let transaction = state.transaction else {
                 return nil
             }
             state.isFinished = true
-            return (recorder, transaction, response ?? state.response, state.responseBody.body, state)
+            return (recorder, transaction, response ?? state.response, state.responseBody.body, state.finish)
         }
         guard let (recorder, transaction, finalResponse, body, snapshot) = pending else { return false }
 
@@ -353,7 +367,7 @@ private extension CWURLProtocol {
     }
 
     /// Falls back to the cached chain when no handshake happened on this load (reused connection).
-    private func tlsInfo(for url: URL, from state: LoadState) -> CWTLSInfo? {
+    private func tlsInfo(for url: URL, from state: Finish) -> CWTLSInfo? {
         guard url.scheme?.lowercased() == "https" else { return nil }
 
         let cached = state.certificates.isEmpty

@@ -1,4 +1,4 @@
-#if CATWALK_ENABLED
+#if CATWALK_ENABLED && !CATWALK_EXCLUDE_BACKGROUND
 //
 //  CWBackgroundTaskRecord.swift
 //  CatWalk
@@ -9,12 +9,17 @@ import Foundation
 /// What CatWalk learned about one background-session task, attached to the task itself.
 final class CWBackgroundTaskRecord: NSObject, @unchecked Sendable {
 
-    struct State {
+    /// A class so the lock hands out one reference instead of copying every field.
+    final class State {
         var metrics: CWConnectionMetrics?
         var downloadedBody: CWBody?
         var receivedBody: CWBodyAccumulator
         var uploadFile: URL?
         var isRecorded = false
+
+        init(receivedBody: CWBodyAccumulator) {
+            self.receivedBody = receivedBody
+        }
     }
 
     /// Transaction id; the same task always maps to the same row.

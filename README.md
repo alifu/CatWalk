@@ -145,6 +145,25 @@ To keep it in a Release build, for example for QA or TestFlight, enable the pack
 
 Use `CWConfiguration(isEnabled:)` or `CatWalk.setEnabled(_:)` as a runtime kill switch on top of that.
 
+### Smaller binary
+
+Each traffic source can be compiled out with a package trait. The public API stays, and the matching
+`CWConfiguration` switches and Settings rows simply do nothing or disappear.
+
+| Trait | Leaves out | Code saved (Release, arm64) |
+|---|---|---|
+| `ExcludeWebSocket` | `URLSessionWebSocketTask` capture and the Messages tab | about 77 KB |
+| `ExcludeBackgroundSessions` | background session observation | about 37 KB |
+| `ExcludeMedia` | `AVPlayer` media loading | about 56 KB |
+| `ExcludeWebView` | `WKWebView` fetch/XHR reporting and inspectable web views | about 44 KB |
+
+All four together save about 226 KB of the roughly 966 KB of code.
+
+```swift
+.package(url: "https://github.com/alifu/CatWalk.git", branch: "main",
+         traits: ["CatWalkAlwaysOn", "ExcludeMedia", "ExcludeWebView"])
+```
+
 ## Privacy
 
 - Transaction details live in memory. Bodies of 4 KB or more are written to temporary files in the app's `tmp/CatWalk` folder (unencrypted, readable only by the app's sandbox), and each file is deleted when its transaction is evicted or cleared. Files left by an earlier run are removed on the next `start`.

@@ -47,21 +47,24 @@ public struct CWTransaction: Sendable, Identifiable, Equatable {
 
     public let endDate: Date?
 
-    public let error: CWTransactionError?
-
-    /// `nil` for plain HTTP, and until the exchange finishes.
-    public let tls: CWTLSInfo?
-
     public let source: Source
 
+    /// The fields most exchanges leave empty, behind one reference so copying a transaction stays cheap.
+    private let details: Details
+
+    public var error: CWTransactionError? { details.error }
+
+    /// `nil` for plain HTTP, and until the exchange finishes.
+    public var tls: CWTLSInfo? { details.tls }
+
     /// Phase breakdown; `nil` until the system reports metrics (they can arrive after completion).
-    public let timing: CWTiming?
+    public var timing: CWTiming? { details.timing }
 
     /// Messages of a WebSocket connection; `nil` for HTTP exchanges.
-    public let webSocket: CWWebSocketLog?
+    public var webSocket: CWWebSocketLog? { details.webSocket }
 
     /// Media fields of an `AVPlayer` request; `nil` for other sources.
-    public let media: CWMediaInfo?
+    public var media: CWMediaInfo? { details.media }
 
     /// Lowercased "method url status", built once per state for O(1)-setup search.
     let searchKey: String
@@ -116,6 +119,25 @@ public struct CWTransaction: Sendable, Identifiable, Equatable {
         webSocket: CWWebSocketLog? = nil,
         media: CWMediaInfo? = nil
     ) {
+        let details = Details(error: error, tls: tls, timing: timing, webSocket: webSocket, media: media)
+        self.init(
+            id: id, state: state, request: request, requestCookies: requestCookies, startDate: startDate,
+            response: response, responseCookies: responseCookies, endDate: endDate, source: source, details: details
+        )
+    }
+
+    private init(
+        id: UUID,
+        state: State,
+        request: CWHTTPRequest,
+        requestCookies: [CWCookie],
+        startDate: Date,
+        response: CWHTTPResponse?,
+        responseCookies: [CWCookie],
+        endDate: Date?,
+        source: Source,
+        details: Details
+    ) {
         self.id = id
         self.state = state
         self.request = request
@@ -124,12 +146,8 @@ public struct CWTransaction: Sendable, Identifiable, Equatable {
         self.response = response
         self.responseCookies = responseCookies
         self.endDate = endDate
-        self.error = error
-        self.tls = tls
-        self.timing = timing
         self.source = source
-        self.webSocket = webSocket
-        self.media = media
+        self.details = details
         self.searchKey = Self.makeSearchKey(request: request, response: response)
     }
 }
@@ -232,7 +250,8 @@ extension CWTransaction {
         webSocket: CWWebSocketLog?? = nil,
         media: CWMediaInfo?? = nil
     ) -> CWTransaction {
-        CWTransaction(
+        let changesDetails = tls != nil || timing != nil || webSocket != nil || media != nil
+        return CWTransaction(
             id: id,
             state: state ?? self.state,
             request: request ?? self.request,
@@ -241,13 +260,46 @@ extension CWTransaction {
             response: response ?? self.response,
             responseCookies: responseCookies ?? self.responseCookies,
             endDate: endDate,
-            error: error,
-            tls: tls ?? self.tls,
-            timing: timing ?? self.timing,
             source: source ?? self.source,
-            webSocket: webSocket ?? self.webSocket,
-            media: media ?? self.media
+            details: changesDetails
+                ? Details(
+                    error: error,
+                    tls: tls ?? self.tls,
+                    timing: timing ?? self.timing,
+                    webSocket: webSocket ?? self.webSocket,
+                    media: media ?? self.media
+                )
+                : details
         )
+    }
+}
+
+// MARK: - Details
+
+extension CWTransaction {
+
+    /// Rarely used fields in one heap object: a copy of the transaction retains it instead of copying each field.
+    private final class Details: Sendable, Equatable {
+
+        let error: CWTransactionError?
+        let tls: CWTLSInfo?
+        let timing: CWTiming?
+        let webSocket: CWWebSocketLog?
+        let media: CWMediaInfo?
+
+        init(error: CWTransactionError?, tls: CWTLSInfo?, timing: CWTiming?, webSocket: CWWebSocketLog?, media: CWMediaInfo?) {
+            self.error = error
+            self.tls = tls
+            self.timing = timing
+            self.webSocket = webSocket
+            self.media = media
+        }
+
+        static func == (lhs: Details, rhs: Details) -> Bool {
+            lhs === rhs
+                || (lhs.error == rhs.error && lhs.tls == rhs.tls && lhs.timing == rhs.timing
+                    && lhs.webSocket == rhs.webSocket && lhs.media == rhs.media)
+        }
     }
 }
 

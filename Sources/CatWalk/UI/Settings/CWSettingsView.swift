@@ -26,12 +26,20 @@ struct CWSettingsView: View {
                 ))
             }
             Section("Sources") {
+                #if !CATWALK_EXCLUDE_WEBSOCKET
                 optionToggle("WebSockets", \.captureWebSockets)
+                #endif
+                #if !CATWALK_EXCLUDE_MEDIA
                 optionToggle("AVPlayer media", \.captureMedia)
+                #endif
+                #if !CATWALK_EXCLUDE_WEBVIEW
                 optionToggle("Instrument new web views", \.instrumentWebViews)
                 optionToggle("Inspectable web views", \.makeWebViewsInspectable)
+                #endif
                 row("Early install", CWBootstrap.didRunAtLoad ? "Active" : (CWBootstrap.isEarlyInstallEnabled ? "Did not run" : "Off"))
+                #if !CATWALK_EXCLUDE_WEBVIEW
                 Text("Web view switches apply to web views created from now on.").font(.caption).foregroundColor(.secondary)
+                #endif
             }
             Section("Ignored hosts") {
                 ForEach(hosts, id: \.self) { Text($0) }

@@ -16,7 +16,7 @@ extension CatWalk {
     /// (`CWConfiguration.makeWebViewsInspectable`) for those.
     @MainActor
     public static func instrument(_ configuration: WKWebViewConfiguration) {
-        #if CATWALK_ENABLED
+        #if CATWALK_ENABLED && !CATWALK_EXCLUDE_WEBVIEW
         CWWebViewInstrumentation.instrument(
             configuration,
             limit: CWCaptureEngine.shared.recorder.configuration.maxBodyBytes

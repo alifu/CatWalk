@@ -36,6 +36,11 @@ public struct CWBody: Sendable, Equatable {
         }
     }
 
+    /// The backing file, if the body is on disk.
+    var fileURL: URL? {
+        if case let .file(file) = storage { file.url } else { nil }
+    }
+
     public var isTruncated: Bool {
         totalBytes > storedBytes
     }

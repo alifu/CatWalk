@@ -103,16 +103,20 @@ final class CWCaptureEngine: Sendable {
             URLProtocol.registerClass(CWURLProtocol.self)
         }
         CWSessionConfigurationSwizzle.setInjecting(configuration.interceptCustomSessions)
+        #if !CATWALK_EXCLUDE_BACKGROUND
         CWBackgroundSessionHook.install()
+        #endif
+        #if !CATWALK_EXCLUDE_WEBSOCKET
         if configuration.captureWebSockets {
             CWWebSocketHook.install()
         }
-        #if canImport(AVFoundation)
+        #endif
+        #if canImport(AVFoundation) && !CATWALK_EXCLUDE_MEDIA
         if configuration.captureMedia {
             CWMediaObserver.install()
         }
         #endif
-        #if canImport(WebKit)
+        #if canImport(WebKit) && !CATWALK_EXCLUDE_WEBVIEW
         if configuration.instrumentWebViews || configuration.makeWebViewsInspectable {
             CWWebViewInstrumentation.installInitializationHook()
         }

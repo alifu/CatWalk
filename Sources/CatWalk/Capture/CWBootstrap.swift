@@ -29,6 +29,8 @@ enum CWBootstrap {
 func catWalkBootstrap() {
     guard CWBootstrap.isEarlyInstallEnabled else { return }
     CWSessionConfigurationSwizzle.install()
+    #if !CATWALK_EXCLUDE_BACKGROUND
     CWBackgroundSessionHook.install()
+    #endif
 }
 #endif

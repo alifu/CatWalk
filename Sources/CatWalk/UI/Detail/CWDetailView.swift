@@ -74,7 +74,12 @@ struct CWDetailView: View {
                 headersTitle: "Response headers", headers: transaction.response?.headers,
                 captured: transaction.response?.body, mimeType: transaction.response?.mimeType
             )
-        case .messages: transaction.webSocket.map { CWWebSocketMessagesView(log: $0) }
+        case .messages:
+            #if !CATWALK_EXCLUDE_WEBSOCKET
+            transaction.webSocket.map { CWWebSocketMessagesView(log: $0) }
+            #else
+            EmptyView()
+            #endif
         case .headers: CWHeadersTab(transaction: transaction)
         case .cookies: CWCookiesTab(transaction: transaction)
         case .ssl: CWSSLTab(tls: transaction.tls, isHTTPS: transaction.request.url.scheme == "https")
@@ -165,9 +170,17 @@ private struct CWOverviewTab: View {
                 CWKeyValueRow(name: "Duration", value: CWFormat.duration(duration))
             }
             if let webSocket = transaction.webSocket {
+                #if !CATWALK_EXCLUDE_WEBSOCKET
                 CWWebSocketSummary(log: webSocket)
+                #else
+                EmptyView()
+                #endif
             } else if let media = transaction.media {
+                #if !CATWALK_EXCLUDE_MEDIA
                 CWMediaSummary(media: media)
+                #else
+                EmptyView()
+                #endif
             } else {
                 CWKeyValueRow(name: "Request body", value: size(transaction.request.body))
                 CWKeyValueRow(name: "Response body", value: size(transaction.response?.body))

@@ -18,7 +18,7 @@ final class CWBodyFile: Sendable {
     /// When this process first used body files; anything older in `directory` is from an earlier run.
     private static let launchDate = Date()
 
-    private let url: URL
+    let url: URL
 
     /// - Returns: `nil` when the file cannot be written; the caller then keeps the bytes in memory.
     init?(writing data: Data) {

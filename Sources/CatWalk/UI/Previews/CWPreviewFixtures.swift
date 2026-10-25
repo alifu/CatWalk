@@ -123,9 +123,11 @@ extension CWPreviewFixtures {
     NavigationView { CWDetailView(transactionID: CWPreviewFixtures.ok.id, store: CWPreviewFixtures.store()) }
 }
 
+#if !CATWALK_EXCLUDE_WEBSOCKET
 #Preview("WebSocket messages") {
     NavigationView { ScrollView { CWWebSocketMessagesView(log: CWPreviewFixtures.socket.webSocket!).padding() } }
 }
+#endif
 
 #Preview("Mock editor") {
     CWMockEditorView(draft: CWMockDraft(from: CWPreviewFixtures.notFound))

@@ -1,4 +1,4 @@
-#if CATWALK_ENABLED
+#if CATWALK_ENABLED && !CATWALK_EXCLUDE_MEDIA
 //
 //  CWMediaSamples.swift
 //  CatWalk

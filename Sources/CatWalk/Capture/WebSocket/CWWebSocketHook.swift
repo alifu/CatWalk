@@ -1,4 +1,4 @@
-#if CATWALK_ENABLED
+#if CATWALK_ENABLED && !CATWALK_EXCLUDE_WEBSOCKET
 //
 //  CWWebSocketHook.swift
 //  CatWalk
@@ -34,7 +34,7 @@ enum CWWebSocketHook {
 
     /// By behaviour, not class: the runtime class is not a `URLSessionWebSocketTask` subclass.
     static func isWebSocketTask(_ task: URLSessionTask) -> Bool {
-        task.responds(to: NSSelectorFromString("sendPingWithPongReceiveHandler:"))
+        CWTaskKind.isWebSocket(task)
     }
 
     /// Hooks the class of `task` once, e.g. a renamed class first seen through a factory.

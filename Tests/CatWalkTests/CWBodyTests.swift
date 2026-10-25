@@ -23,41 +23,32 @@ struct CWBodyTests {
     @Test("a large body round-trips through a file that is deleted with the body")
     func largeBodyLivesOnDisk() throws {
         let payload = Data(repeating: 7, count: CWBody.diskThreshold + 1)
-        let before = files()
         var body: CWBody? = CWBody(capturing: payload, limit: 1 << 20)
-        let created = files().subtracting(before)
+        let file = try #require(body?.fileURL)
 
-        #expect(created.count == 1)
+        #expect(FileManager.default.fileExists(atPath: file.path))
         #expect(body?.data == payload)
         #expect(body?.storedBytes == payload.count)
         #expect(body?.strippingData().storedBytes == payload.count)
 
         body = nil
-        #expect(files().isDisjoint(with: created))
+        #expect(!FileManager.default.fileExists(atPath: file.path))
     }
 
     @Test("a small body stays in memory")
     func smallBodyStaysInMemory() {
-        let before = files()
         let body = CWBody(capturing: Data(repeating: 1, count: 10), limit: 100)
 
-        #expect(files() == before)
+        #expect(body.fileURL == nil)
         #expect(body.strippingData().storedBytes == 0)
     }
 
     @Test("a body whose file vanished reads as empty")
-    func missingFile() {
-        let before = files()
+    func missingFile() throws {
         let body = CWBody(capturing: Data(repeating: 1, count: CWBody.diskThreshold), limit: 1 << 20)
-        files().subtracting(before).forEach { try? FileManager.default.removeItem(atPath: $0) }
+        try FileManager.default.removeItem(at: #require(body.fileURL))
 
         #expect(body.data.isEmpty)
-    }
-
-    /// Other tests write bodies too, so compare sets of paths rather than counts.
-    private func files() -> Set<String> {
-        let names = (try? FileManager.default.contentsOfDirectory(atPath: CWBodyFile.directory.path)) ?? []
-        return Set(names.map { CWBodyFile.directory.appendingPathComponent($0).path })
     }
 
     @Test("truncates to the limit but remembers the full size")

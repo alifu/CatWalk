@@ -12,6 +12,7 @@ It can also answer requests with mock responses. Everything is kept in memory an
 - Mock rules (exact, path, prefix, contains, regex), editable in the app and created from a captured response
 - Background-session transfers, observed from the session delegate (read-only)
 - WebSocket connections (`URLSessionWebSocketTask`): handshake and every message in a chat-style Messages tab
+- `WKWebView` pages: `fetch` and `XMLHttpRequest` calls with bodies (opt-in), and inspectable web views for Safari
 - Timing waterfall per request: DNS, connect, TLS, send, wait, receive
 - Filters, JSON tree, copy as cURL, HAR export (with timings), request replay
 - Compiled out of Release builds by default
@@ -72,12 +73,33 @@ CWConfiguration(
     triggers: [.shake],
     captureWebSockets: true,                 // record URLSessionWebSocketTask handshakes and messages
     maxFramesPerConnection: 1000,            // per WebSocket; oldest messages are dropped first
+    instrumentWebViews: false,               // inject the fetch/XHR reporter into every new WKWebView
+    makeWebViewsInspectable: true,           // Debug default; lets Safari Web Inspector attach (iOS 16.4+)
     isEnabled: true                          // feed from a remote flag to switch CatWalk off
 )
 ```
 
 Ignored hosts take `api.example.com` or `*.example.com` (the domain and all subdomains). Their requests never
 reach CatWalk. You can edit the list at runtime with `CatWalk.ignore(host:)` and in the inspector's Settings.
+
+## Web views
+
+Page traffic runs in WebKit's own process, so CatWalk can't intercept it. Instead it injects a small script
+that reports the page's `fetch` and `XMLHttpRequest` calls, with request and response bodies (text types only,
+capped like other bodies). Turn it on for one web view, before creating it:
+
+```swift
+let configuration = WKWebViewConfiguration()
+CatWalk.instrument(configuration)
+let webView = WKWebView(frame: .zero, configuration: configuration)
+```
+
+or for every web view with `CWConfiguration(instrumentWebViews: true)`. These rows carry a **WEB** chip and can't
+be mocked. The script only observes: arguments, return values and promises reach the page unchanged.
+
+Not reported: images, styles, scripts, page loads, service workers, cookies (WebKit keeps them from the page),
+and response headers that CORS hides. `makeWebViewsInspectable` (on in Debug) sets `isInspectable`, so Safari's
+Web Inspector (Develop menu on a Mac) shows all of a web view's traffic.
 
 ## Mocking
 
@@ -130,7 +152,8 @@ closes the connection while the app has no `receive()` pending, the row stays op
 
 CatWalk does not see:
 
-- `AVPlayer` or `WKWebView` traffic
+- `AVPlayer` traffic
+- `WKWebView` traffic other than `fetch`/XHR of instrumented web views (see [Web views](#web-views))
 - Network.framework (`NWConnection`) and libraries built on it, such as Starscream's native engine
 - requests already running when `CatWalk.start` is called, and sessions whose `protocolClasses` the app sets itself
 

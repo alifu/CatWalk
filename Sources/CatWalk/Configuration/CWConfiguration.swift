@@ -18,6 +18,15 @@ public struct CWConfiguration: Sendable {
 
     public static let defaultMaxFramesPerConnection = 1000
 
+    /// `true` in Debug builds, `false` in Release builds that keep CatWalk (`CatWalkAlwaysOn`).
+    public static let defaultMakeWebViewsInspectable: Bool = {
+        #if DEBUG
+        true
+        #else
+        false
+        #endif
+    }()
+
     public static let defaultRedactedHeaders: Set<String> = ["Authorization", "Proxy-Authorization"]
 
     /// Bytes kept per request/response body; the full body is still delivered to the app.
@@ -50,6 +59,14 @@ public struct CWConfiguration: Sendable {
     /// Messages kept per WebSocket connection; the oldest are dropped first.
     public var maxFramesPerConnection: Int
 
+    /// Inject a script into every new `WKWebView` that reports page `fetch` / `XMLHttpRequest` calls.
+    /// Off by default; `CatWalk.instrument(_:)` does the same for one configuration.
+    public var instrumentWebViews: Bool
+
+    /// Set `isInspectable` on every new `WKWebView` (iOS 16.4+), so Safari Web Inspector shows all
+    /// of its traffic, including images, styles and page loads that the script can't see.
+    public var makeWebViewsInspectable: Bool
+
     /// `false` turns CatWalk off without removing it: `start` does nothing. Feed it from a remote flag.
     public var isEnabled: Bool
 
@@ -63,6 +80,8 @@ public struct CWConfiguration: Sendable {
         triggers: CWTrigger = [.shake],
         captureWebSockets: Bool = true,
         maxFramesPerConnection: Int = CWConfiguration.defaultMaxFramesPerConnection,
+        instrumentWebViews: Bool = false,
+        makeWebViewsInspectable: Bool = CWConfiguration.defaultMakeWebViewsInspectable,
         isEnabled: Bool = true
     ) {
         self.maxBodyBytes = max(0, maxBodyBytes)
@@ -72,6 +91,8 @@ public struct CWConfiguration: Sendable {
         self.triggers = triggers
         self.captureWebSockets = captureWebSockets
         self.maxFramesPerConnection = max(1, maxFramesPerConnection)
+        self.instrumentWebViews = instrumentWebViews
+        self.makeWebViewsInspectable = makeWebViewsInspectable
         self.isEnabled = isEnabled
         self.redactedHeaders = redactedHeaders
         self.interceptCustomSessions = interceptCustomSessions

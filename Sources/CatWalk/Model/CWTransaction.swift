@@ -17,6 +17,8 @@ public struct CWTransaction: Sendable, Identifiable, Equatable {
         case backgroundSession
         /// A `URLSessionWebSocketTask`: handshake plus every message, read-only.
         case webSocket
+        /// `fetch` / `XMLHttpRequest` of a page in an instrumented `WKWebView`, read-only.
+        case webView
     }
 
     public enum State: Sendable, Equatable {

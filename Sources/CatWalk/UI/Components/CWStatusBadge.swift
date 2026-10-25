@@ -13,6 +13,7 @@ extension CWTransaction.Source {
         case .urlSession: "App sessions"
         case .backgroundSession: "Background sessions"
         case .webSocket: "WebSockets"
+        case .webView: "Web views"
         }
     }
 
@@ -22,6 +23,7 @@ extension CWTransaction.Source {
         case .urlSession: nil
         case .backgroundSession: "BG"
         case .webSocket: "WS"
+        case .webView: "WEB"
         }
     }
 }

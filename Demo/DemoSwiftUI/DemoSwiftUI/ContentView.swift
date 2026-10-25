@@ -62,6 +62,7 @@ struct ContentView: View {
     @StateObject private var viewModel: ProductsViewModel
     @State private var didAppear = false
     @State private var showsInspector = false
+    @State private var showsWebDemo = false
 
     init(session: URLSession = .shared) {
         _viewModel = StateObject(wrappedValue: ProductsViewModel(session: session))
@@ -86,12 +87,16 @@ struct ContentView: View {
         .overlay(alignment: .bottomLeading) {
             HStack {
                 Button("Inspector") { showsInspector = true }
-                Button("Background") { BackgroundDownloader.shared.download() }
-                Button("WebSocket") { WebSocketChat.shared.run() }
+                Menu("Other traffic") {
+                    Button("Background download") { BackgroundDownloader.shared.download() }
+                    Button("WebSocket") { WebSocketChat.shared.run() }
+                    Button("Web view") { showsWebDemo = true }
+                }
             }
             .buttonStyle(.borderedProminent)
             .padding()
         }
+        .sheet(isPresented: $showsWebDemo) { WebDemoView() }
         .catWalk(isPresented: $showsInspector)
         .onAppear {
             if !didAppear {

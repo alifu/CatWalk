@@ -36,6 +36,21 @@ extension SharedEngine {
             CWCaptureEngine.shared.store.removeAll()
         }
 
+        @Test("detail view survives its transaction being updated from a background thread")
+        func detailLiveUpdateOffMain() {
+            let store = CWPreviewFixtures.store()
+            let id = CWPreviewFixtures.ok.id
+            let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 390, height: 844))
+            window.rootViewController = UIHostingController(rootView: NavigationView { CWDetailView(transactionID: id, store: store) })
+            window.makeKeyAndVisible()
+            RunLoop.main.run(until: Date().addingTimeInterval(0.2))
+
+            // A replay finishes on a URLSession queue and upserts from there.
+            let transaction = CWPreviewFixtures.ok
+            DispatchQueue.global().async { store.upsert(transaction) }
+            RunLoop.main.run(until: Date().addingTimeInterval(0.4))
+        }
+
         @Test("detail, every tab's data source, editor, mocks and settings render")
         func screens() {
             let store = CWPreviewFixtures.store()

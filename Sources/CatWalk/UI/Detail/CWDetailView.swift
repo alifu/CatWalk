@@ -55,7 +55,9 @@ struct CWDetailView: View {
         .sheet(item: $mockDraft) { CWMockEditorView(draft: $0.draft) }
         .sheet(item: $shareItem) { CWShareSheet(items: $0.items) }
         .onAppear { transaction = store.transaction(id: transactionID) }
-        .onReceive(store.changes.filter { $0 == .upserted(transactionID) }.receive(on: DispatchQueue.main)) { _ in
+        // Hop to main first: the filter closure is main-actor isolated and the store publishes on any thread
+        // (a replay finishes on a URLSession queue).
+        .onReceive(store.changes.receive(on: DispatchQueue.main).filter { $0 == .upserted(transactionID) }) { _ in
             transaction = store.transaction(id: transactionID) ?? transaction
         }
     }

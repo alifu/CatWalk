@@ -17,6 +17,7 @@ struct CWKeyValueRow: View {
         VStack(alignment: .leading, spacing: 2) {
             Text(name).font(.caption).foregroundColor(.secondary)
             Text(value).font(.footnote).textSelection(.enabled)
+                .lineLimit(nil).fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .contextMenu {

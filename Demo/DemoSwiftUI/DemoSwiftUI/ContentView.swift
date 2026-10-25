@@ -84,9 +84,12 @@ struct ContentView: View {
             }
         }
         .overlay(alignment: .bottomLeading) {
-            Button("Inspector") { showsInspector = true }
-                .buttonStyle(.borderedProminent)
-                .padding()
+            HStack {
+                Button("Inspector") { showsInspector = true }
+                Button("Background download") { BackgroundDownloader.shared.download() }
+            }
+            .buttonStyle(.borderedProminent)
+            .padding()
         }
         .catWalk(isPresented: $showsInspector)
         .onAppear {

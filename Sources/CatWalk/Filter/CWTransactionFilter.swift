@@ -46,12 +46,14 @@ struct CWTransactionFilter: Equatable, Sendable {
     var statusClasses: Set<CWStatusClass> = []
     var mockedOnly = false
     var host: String?
+    var source: CWTransaction.Source?
     /// Rows the user swiped away; the store keeps them, the list hides them.
     var hiddenIDs: Set<UUID> = []
 
     /// Whether any criterion narrows the list (hidden rows do not count).
     var isActive: Bool {
         !trimmedSearch.isEmpty || !methods.isEmpty || !statusClasses.isEmpty || mockedOnly || host != nil
+            || source != nil
     }
 
     private var trimmedSearch: String {
@@ -68,6 +70,7 @@ struct CWTransactionFilter: Equatable, Sendable {
                 && (statusClasses.isEmpty || CWStatusClass(transaction).map(statusClasses.contains) == true)
                 && (!mockedOnly || transaction.isMocked)
                 && (host == nil || transaction.request.url.host?.lowercased() == host)
+                && (source == nil || transaction.source == source)
         }
     }
 

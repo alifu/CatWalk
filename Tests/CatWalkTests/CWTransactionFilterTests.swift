@@ -56,6 +56,17 @@ struct CWTransactionFilterTests {
         #expect(CWTransactionFilter(mockedOnly: true).apply(to: [ok, mocked]).map(\.state) == [.mocked])
     }
 
+    @Test("source filter keeps only that source; background rows are not mockable")
+    func sourceFilter() {
+        let background = ok.from(.backgroundSession)
+        var filter = CWTransactionFilter()
+        filter.source = .backgroundSession
+
+        #expect(filter.apply(to: [ok, background]).map(\.source) == [.backgroundSession])
+        #expect(filter.isActive)
+        #expect(ok.isMockable && !background.isMockable)
+    }
+
     @Test("hosts are unique, lowercased and sorted")
     func hosts() {
         #expect(CWTransactionFilter.hosts(in: all) == ["api.test", "cdn.test"])

@@ -28,6 +28,23 @@ struct CWRecorder: Sendable {
         at date: Date = Date(),
         cookieStorage: HTTPCookieStorage = .shared
     ) -> CWTransaction? {
+        begin(
+            request,
+            capturedBody: body.map { CWBody(capturing: $0, limit: configuration.maxBodyBytes) },
+            id: id,
+            at: date,
+            cookieStorage: cookieStorage
+        )
+    }
+
+    /// For bodies already capped by the caller (e.g. a prefix read from an upload file).
+    func begin(
+        _ request: URLRequest,
+        capturedBody: CWBody?,
+        id: UUID = UUID(),
+        at date: Date = Date(),
+        cookieStorage: HTTPCookieStorage = .shared
+    ) -> CWTransaction? {
         guard let url = request.url else { return nil }
 
         let headers = CWHeaders(request.allHTTPHeaderFields ?? [:])
@@ -43,7 +60,7 @@ struct CWRecorder: Sendable {
             method: request.httpMethod ?? "GET",
             url: url,
             headers: headers.redacting(redactedHeaders),
-            body: body.map { CWBody(capturing: $0, limit: configuration.maxBodyBytes) }
+            body: capturedBody
         )
 
         return CWTransaction(

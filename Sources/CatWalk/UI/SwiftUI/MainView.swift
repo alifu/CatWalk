@@ -48,10 +48,12 @@ struct MainView: View {
                     .tint(.orange)
                 }
                 .swipeActions(edge: .leading) {
-                    Button { mockDraft = CWMockDraftItem(CWMockDraft(from: transaction)) } label: {
-                        Label("Mock", systemImage: "theatermasks")
+                    if transaction.isMockable {
+                        Button { mockDraft = CWMockDraftItem(CWMockDraft(from: transaction)) } label: {
+                            Label("Mock", systemImage: "theatermasks")
+                        }
+                        .tint(.purple)
                     }
-                    .tint(.purple)
                 }
                 .contextMenu { contextMenu(for: transaction) }
             }
@@ -83,8 +85,10 @@ struct MainView: View {
         Button { UIPasteboard.general.string = CWCurlExporter.command(for: transaction) } label: {
             Label("Copy as cURL", systemImage: "terminal")
         }
-        Button { mockDraft = CWMockDraftItem(CWMockDraft(from: transaction)) } label: {
-            Label("Mock this response", systemImage: "theatermasks")
+        if transaction.isMockable {
+            Button { mockDraft = CWMockDraftItem(CWMockDraft(from: transaction)) } label: {
+                Label("Mock this response", systemImage: "theatermasks")
+            }
         }
     }
 

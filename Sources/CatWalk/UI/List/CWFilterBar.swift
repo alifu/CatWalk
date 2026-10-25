@@ -30,8 +30,25 @@ struct CWFilterBar: View {
                     viewModel.filter.mockedOnly.toggle()
                 }
                 hostMenu
+                sourceMenu
             }
             .padding(.horizontal)
+        }
+    }
+
+    private var sourceMenu: some View {
+        Menu {
+            Button("All sources") { viewModel.filter.source = nil }
+            ForEach(CWTransaction.Source.allCases, id: \.self) { source in
+                Button(source.title) { viewModel.filter.source = source }
+            }
+        } label: {
+            Label(viewModel.filter.source?.title ?? "Source", systemImage: "tray.2")
+                .font(.footnote.weight(.medium))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .foregroundColor(viewModel.filter.source == nil ? .primary : .white)
+                .background(viewModel.filter.source == nil ? Color(.secondarySystemFill) : .accentColor, in: Capsule())
         }
     }
 

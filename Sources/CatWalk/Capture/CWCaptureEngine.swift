@@ -102,6 +102,7 @@ final class CWCaptureEngine: Sendable {
             URLProtocol.registerClass(CWURLProtocol.self)
         }
         CWSessionConfigurationSwizzle.setInjecting(configuration.interceptCustomSessions)
+        CWBackgroundSessionHook.install()
         if configuration.interceptCustomSessions {
             CWSessionConfigurationSwizzle.install()
         }

@@ -75,8 +75,10 @@ struct CWDetailView: View {
                 Label("Share HAR", systemImage: "square.and.arrow.up")
             }
             Button { replay(transaction) } label: { Label("Replay request", systemImage: "arrow.clockwise") }
-            Button { mockDraft = CWMockDraftItem(CWMockDraft(from: transaction)) } label: {
-                Label("Mock this response", systemImage: "theatermasks")
+            if transaction.isMockable {
+                Button { mockDraft = CWMockDraftItem(CWMockDraft(from: transaction)) } label: {
+                    Label("Mock this response", systemImage: "theatermasks")
+                }
             }
         } label: {
             Image(systemName: "ellipsis.circle")
@@ -101,6 +103,9 @@ private struct CWOverviewTab: View {
             HStack { CWStatusBadge(transaction: transaction); if transaction.isMocked { Label("Mocked", systemImage: "theatermasks.fill").foregroundColor(.purple) } }
             CWKeyValueRow(name: "URL", value: transaction.request.url.absoluteString)
             CWKeyValueRow(name: "Method", value: transaction.request.method)
+            if transaction.source != .urlSession {
+                CWKeyValueRow(name: "Source", value: transaction.source.title)
+            }
             CWKeyValueRow(name: "Started", value: transaction.startDate.formatted(date: .abbreviated, time: .standard))
             if let duration = transaction.duration {
                 CWKeyValueRow(name: "Duration", value: CWFormat.duration(duration))

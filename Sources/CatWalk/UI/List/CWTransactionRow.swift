@@ -44,6 +44,13 @@ struct CWTransactionRow: View {
             if transaction.tls != nil {
                 Image(systemName: "lock.fill").accessibilityLabel("Secure connection")
             }
+            if transaction.source == .backgroundSession {
+                Text("BG")
+                    .font(.caption2.weight(.bold))
+                    .padding(.horizontal, 4)
+                    .overlay(Capsule().stroke(Color.secondary))
+                    .accessibilityLabel("Background session")
+            }
             if transaction.isMocked {
                 Image(systemName: "theatermasks.fill").foregroundColor(.purple).accessibilityLabel("Mocked")
             }

@@ -6,6 +6,16 @@
 
 import SwiftUI
 
+extension CWTransaction.Source {
+
+    var title: String {
+        switch self {
+        case .urlSession: "App sessions"
+        case .backgroundSession: "Background sessions"
+        }
+    }
+}
+
 extension CWTransaction {
 
     var statusColor: Color {

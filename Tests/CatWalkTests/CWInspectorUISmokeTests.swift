@@ -10,40 +10,43 @@ import UIKit
 @testable import CatWalk
 
 /// Hosts each screen in a window and lays it out, to catch crashes the compiler cannot.
-@Suite("Inspector UI smoke", .serialized)
-@MainActor
-struct CWInspectorUISmokeTests {
+extension SharedEngine {
 
-    private func layOut<V: View>(_ view: V) {
-        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 390, height: 844))
-        let controller = UIHostingController(rootView: view)
-        window.rootViewController = controller
-        window.makeKeyAndVisible()
-        controller.view.setNeedsLayout()
-        controller.view.layoutIfNeeded()
-        RunLoop.main.run(until: Date().addingTimeInterval(0.4))
-        #expect(controller.view.bounds.width == 390)
-    }
+    @Suite("Inspector UI smoke", .serialized)
+    @MainActor
+    struct CWInspectorUISmokeTests {
 
-    @Test("main list renders captured transactions")
-    func main() {
-        CWCaptureEngine.shared.store.removeAll()
-        CWPreviewFixtures.all.forEach(CWCaptureEngine.shared.store.upsert)
+        private func layOut<V: View>(_ view: V) {
+            let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 390, height: 844))
+            let controller = UIHostingController(rootView: view)
+            window.rootViewController = controller
+            window.makeKeyAndVisible()
+            controller.view.setNeedsLayout()
+            controller.view.layoutIfNeeded()
+            RunLoop.main.run(until: Date().addingTimeInterval(0.4))
+            #expect(controller.view.bounds.width == 390)
+        }
 
-        layOut(MainView(onDismiss: {}))
-        CWCaptureEngine.shared.store.removeAll()
-    }
+        @Test("main list renders captured transactions")
+        func main() {
+            CWCaptureEngine.shared.store.removeAll()
+            CWPreviewFixtures.all.forEach(CWCaptureEngine.shared.store.upsert)
 
-    @Test("detail, every tab's data source, editor, mocks and settings render")
-    func screens() {
-        let store = CWPreviewFixtures.store()
+            layOut(MainView(onDismiss: {}))
+            CWCaptureEngine.shared.store.removeAll()
+        }
 
-        layOut(NavigationView { CWDetailView(transactionID: CWPreviewFixtures.ok.id, store: store) })
-        layOut(NavigationView { CWDetailView(transactionID: CWPreviewFixtures.failed.id, store: store) })
-        layOut(NavigationView { CWDetailView(transactionID: UUID(), store: store) })
-        layOut(CWMockEditorView(draft: CWMockDraft(from: CWPreviewFixtures.notFound)))
-        layOut(NavigationView { CWMockListView() })
-        layOut(NavigationView { CWSettingsView(store: store) })
+        @Test("detail, every tab's data source, editor, mocks and settings render")
+        func screens() {
+            let store = CWPreviewFixtures.store()
+
+            layOut(NavigationView { CWDetailView(transactionID: CWPreviewFixtures.ok.id, store: store) })
+            layOut(NavigationView { CWDetailView(transactionID: CWPreviewFixtures.failed.id, store: store) })
+            layOut(NavigationView { CWDetailView(transactionID: UUID(), store: store) })
+            layOut(CWMockEditorView(draft: CWMockDraft(from: CWPreviewFixtures.notFound)))
+            layOut(NavigationView { CWMockListView() })
+            layOut(NavigationView { CWSettingsView(store: store) })
+        }
     }
 }
 #endif

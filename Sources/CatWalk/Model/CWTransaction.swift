@@ -9,6 +9,14 @@ import Foundation
 /// One request/response exchange. Immutable: state changes return a new copy.
 public struct CWTransaction: Sendable, Identifiable, Equatable {
 
+    /// How CatWalk saw the exchange.
+    public enum Source: Sendable, Equatable, CaseIterable {
+        /// Intercepted in the app (`URLProtocol`): full capture, mockable.
+        case urlSession
+        /// Observed from a background session's delegate: read-only, appears when it finishes.
+        case backgroundSession
+    }
+
     public enum State: Sendable, Equatable {
         case inFlight
         case completed
@@ -38,11 +46,18 @@ public struct CWTransaction: Sendable, Identifiable, Equatable {
     /// `nil` for plain HTTP, and until the exchange finishes.
     public let tls: CWTLSInfo?
 
+    public let source: Source
+
     /// Phase breakdown; `nil` until the system reports metrics (they can arrive after completion).
     public let timing: CWTiming?
 
     /// Lowercased "method url status", built once per state for O(1)-setup search.
     let searchKey: String
+
+    /// Mock rules only apply to requests CatWalk intercepts itself.
+    public var isMockable: Bool {
+        source == .urlSession
+    }
 
     public var isMocked: Bool {
         state == .mocked
@@ -84,7 +99,8 @@ public struct CWTransaction: Sendable, Identifiable, Equatable {
         endDate: Date?,
         error: CWTransactionError?,
         tls: CWTLSInfo?,
-        timing: CWTiming?
+        timing: CWTiming?,
+        source: Source = .urlSession
     ) {
         self.id = id
         self.state = state
@@ -97,6 +113,7 @@ public struct CWTransaction: Sendable, Identifiable, Equatable {
         self.error = error
         self.tls = tls
         self.timing = timing
+        self.source = source
         self.searchKey = Self.makeSearchKey(request: request, response: response)
     }
 }
@@ -136,6 +153,10 @@ extension CWTransaction {
         copy(tls: .some(tls ?? self.tls), timing: .some(timing ?? self.timing))
     }
 
+    func from(_ source: Source) -> CWTransaction {
+        copy(source: source)
+    }
+
     private func finished(
         _ state: State,
         response: CWHTTPResponse?,
@@ -156,7 +177,8 @@ extension CWTransaction {
             endDate: date,
             error: error,
             tls: tls,
-            timing: timing
+            timing: timing,
+            source: source
         )
     }
 
@@ -165,7 +187,8 @@ extension CWTransaction {
         request: CWHTTPRequest? = nil,
         response: CWHTTPResponse?? = nil,
         tls: CWTLSInfo?? = nil,
-        timing: CWTiming?? = nil
+        timing: CWTiming?? = nil,
+        source: Source? = nil
     ) -> CWTransaction {
         CWTransaction(
             id: id,
@@ -178,7 +201,8 @@ extension CWTransaction {
             endDate: endDate,
             error: error,
             tls: tls ?? self.tls,
-            timing: timing ?? self.timing
+            timing: timing ?? self.timing,
+            source: source ?? self.source
         )
     }
 }

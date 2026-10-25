@@ -11,7 +11,7 @@ import Foundation
 import Testing
 @testable import CatWalk
 
-extension CWURLProtocolTests {
+extension SharedEngine.CWURLProtocolTests {
 
     static let isLiveEnabled = ProcessInfo.processInfo.environment["CATWALK_LIVE_TESTS"] != nil
     private static let liveURL = URL(string: "https://dummyjson.com/products/1")!
@@ -27,7 +27,7 @@ extension CWURLProtocolTests {
     }
 
     @Test("live: app pinning sees the real trust and accepts; TLS details are captured",
-          .enabled(if: CWURLProtocolTests.isLiveEnabled))
+          .enabled(if: SharedEngine.CWURLProtocolTests.isLiveEnabled))
     func liveAcceptedPin() async throws {
         startLive()
         let delegate = SPKIPinningDelegate(expectedPin: nil)
@@ -50,7 +50,7 @@ extension CWURLProtocolTests {
     }
 
     @Test("live: a wrong pin in the app still blocks the request through CatWalk",
-          .enabled(if: CWURLProtocolTests.isLiveEnabled))
+          .enabled(if: SharedEngine.CWURLProtocolTests.isLiveEnabled))
     func liveRejectedPin() async throws {
         startLive()
         let session = liveSession(pinning: SPKIPinningDelegate(expectedPin: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="))

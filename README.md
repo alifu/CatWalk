@@ -10,6 +10,7 @@ It can also answer requests with mock responses. Everything is kept in memory an
 - Captures `URLSession.shared` and custom sessions (Alamofire and others), including POST bodies and redirects
 - TLS version, cipher suite and certificate chain with SHA-256 and SPKI pinning hashes. Your own SSL pinning keeps deciding.
 - Mock rules (exact, path, prefix, contains, regex), editable in the app and created from a captured response
+- Background-session transfers, observed from the session delegate (read-only)
 - Timing waterfall per request: DNS, connect, TLS, send, wait, receive
 - Filters, JSON tree, copy as cURL, HAR export (with timings), request replay
 - Compiled out of Release builds by default
@@ -114,9 +115,14 @@ Use `CWConfiguration(isEnabled:)` or `CatWalk.setEnabled(_:)` as a runtime kill 
 
 ## Limitations
 
-CatWalk is a `URLProtocol`, so like netfox it does not see:
+Background sessions (`URLSessionConfiguration.background`) bypass `URLProtocol`, so CatWalk observes them from
+the session delegate instead. Their rows carry a **BG** chip, appear only once the transfer finishes, and can't
+be mocked. Download bodies are read from the file before your delegate receives it; upload bodies come from the
+file passed to `uploadTask(with:fromFile:)`.
 
-- `URLSessionWebSocketTask`, background sessions, `AVPlayer`, or `WKWebView` traffic
+CatWalk does not see:
+
+- `URLSessionWebSocketTask`, `AVPlayer`, or `WKWebView` traffic
 - requests already running when `CatWalk.start` is called, and sessions whose `protocolClasses` the app sets itself
 
 ## Development

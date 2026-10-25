@@ -23,7 +23,7 @@ It can also answer requests with mock responses. Details are kept in memory and 
 Swift Package Manager:
 
 ```swift
-.package(url: "https://github.com/alifu/CatWalk.git", branch: "main")
+.package(url: "https://github.com/alifu/CatWalk.git", from: "1.0.0")
 ```
 
 Add the `CatWalk` library to your app target.
@@ -140,7 +140,7 @@ nothing (no `URLProtocol` registered, no swizzling, no UI), so you don't need `#
 To keep it in a Release build, for example for QA or TestFlight, enable the package trait:
 
 ```swift
-.package(url: "https://github.com/alifu/CatWalk.git", branch: "main", traits: ["CatWalkAlwaysOn"])
+.package(url: "https://github.com/alifu/CatWalk.git", from: "1.0.0", traits: ["CatWalkAlwaysOn"])
 ```
 
 Use `CWConfiguration(isEnabled:)` or `CatWalk.setEnabled(_:)` as a runtime kill switch on top of that.
@@ -160,7 +160,7 @@ Each traffic source can be compiled out with a package trait. The public API sta
 All four together save about 226 KB of the roughly 966 KB of code.
 
 ```swift
-.package(url: "https://github.com/alifu/CatWalk.git", branch: "main",
+.package(url: "https://github.com/alifu/CatWalk.git", from: "1.0.0",
          traits: ["CatWalkAlwaysOn", "ExcludeMedia", "ExcludeWebView"])
 ```
 

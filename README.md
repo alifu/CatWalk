@@ -26,7 +26,10 @@ Add the `CatWalk` library to your app target.
 
 ## Set up
 
-Start it as early as possible. Sessions created before `start` are not captured.
+Call `start` early in launch. Sessions created before it are still captured: CatWalk hooks
+`URLSessionConfiguration.default` / `.ephemeral` when the app binary loads (before `main`) and stays
+inactive until `start`. To leave configurations untouched until `start`, add `CatWalkEarlyInstall = NO`
+to your Info.plist. Requests already running when `start` is called are not captured.
 
 ```swift
 import CatWalk
@@ -60,7 +63,7 @@ Use `triggers: []` to open it only from your own code.
 CWConfiguration(
     maxBodyBytes: 1_048_576,                 // kept per body; the app still gets the full body
     redactedHeaders: ["Authorization", "Proxy-Authorization"],
-    interceptCustomSessions: true,           // also capture URLSessionConfiguration.default/.ephemeral
+    interceptCustomSessions: true,           // capture sessions created after start (earlier ones: see CatWalkEarlyInstall)
     maxTransactions: 500,                    // oldest are evicted first
     maxTotalBodyBytes: 50 * 1024 * 1024,     // all captured bodies together
     ignoredHosts: ["*.analytics.example.com"],
@@ -114,7 +117,7 @@ Use `CWConfiguration(isEnabled:)` or `CatWalk.setEnabled(_:)` as a runtime kill 
 CatWalk is a `URLProtocol`, so like netfox it does not see:
 
 - `URLSessionWebSocketTask`, background sessions, `AVPlayer`, or `WKWebView` traffic
-- sessions created before `CatWalk.start` (unless they use `URLSession.shared`)
+- requests already running when `CatWalk.start` is called, and sessions whose `protocolClasses` the app sets itself
 
 ## Development
 

@@ -93,6 +93,18 @@ struct CWTimingTests {
         #expect(CWTiming().total == nil)
     }
 
+    @Test("late connection details only fill in, never erase, what is already stored")
+    func connectionDetailsKeepExisting() {
+        let first = CWTiming.mocked(startingAt: start, delay: 1)
+        let second = CWTiming(fullLoad)
+        let transaction = TransactionFixtures.make().withConnectionDetails(tls: nil, timing: first)
+
+        #expect(transaction.withConnectionDetails(tls: nil, timing: nil).timing == first)
+        #expect(transaction.withConnectionDetails(tls: nil, timing: second).timing == second)
+        #expect(transaction.markedMocked().timing == first)
+        #expect(transaction.markedMocked().state == .mocked)
+    }
+
     @Test("a mocked answer waits exactly the rule's delay")
     func mocked() {
         let timing = CWTiming.mocked(startingAt: start, delay: 0.5)

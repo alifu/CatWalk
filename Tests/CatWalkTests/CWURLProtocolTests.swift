@@ -203,6 +203,27 @@ final class CWURLProtocolTests {
         #expect(URLSessionConfiguration.default.protocolClasses?.filter { ObjectIdentifier($0) == catWalk }.count == 1)
     }
 
+    @Test("the load-time bootstrap captures sessions created before start")
+    func earlySession() async throws {
+        #expect(CWBootstrap.didRunAtLoad)
+        engine.stop()
+        CWSessionConfigurationSwizzle.setInjecting(true)
+        let early = URLSession(configuration: .ephemeral)
+        defer { early.invalidateAndCancel() }
+        StubURLProtocol.stub("/early", .response(status: 200, headers: [:], body: Data("ok".utf8)))
+
+        engine.start(
+            configuration: CWConfiguration(interceptCustomSessions: false),
+            upstreamProtocolClasses: [StubURLProtocol.self]
+        )
+        _ = try await early.data(from: baseURL.appendingPathComponent("early"))
+
+        let catWalk = ObjectIdentifier(CWURLProtocol.self)
+        let captured = engine.store.snapshot().filter { $0.request.url.path == "/early" }
+        #expect(captured.count == 1)
+        #expect(URLSessionConfiguration.ephemeral.protocolClasses?.contains { ObjectIdentifier($0) == catWalk } == false)
+    }
+
     @Test("ignored hosts are not intercepted, others still are")
     func ignoredHosts() throws {
         let ignored = URLRequest(url: try #require(URL(string: "https://cdn.analytics.test/p")))

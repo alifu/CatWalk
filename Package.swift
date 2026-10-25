@@ -9,6 +9,11 @@ let inspectorSettings: [SwiftSetting] = [
     .define("CATWALK_ENABLED", .when(traits: ["CatWalkAlwaysOn"])),
 ]
 
+let bootstrapSettings: [CSetting] = [
+    .define("CATWALK_ENABLED", .when(configuration: .debug)),
+    .define("CATWALK_ENABLED", .when(traits: ["CatWalkAlwaysOn"])),
+]
+
 let package = Package(
     name: "CatWalk",
     platforms: [
@@ -25,7 +30,12 @@ let package = Package(
     ],
     targets: [
         .target(
+            name: "CatWalkBootstrap",
+            cSettings: bootstrapSettings
+        ),
+        .target(
             name: "CatWalk",
+            dependencies: ["CatWalkBootstrap"],
             resources: [.process("Resources")],
             swiftSettings: inspectorSettings
         ),

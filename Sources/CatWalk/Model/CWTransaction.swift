@@ -128,12 +128,12 @@ extension CWTransaction {
 
     /// Same exchange, flagged as answered by a mock rule, with the mock's own timing.
     func markedMocked(timing: CWTiming? = nil) -> CWTransaction {
-        copy(state: .mocked, timing: timing ?? self.timing)
+        copy(state: .mocked, timing: .some(timing ?? self.timing))
     }
 
     /// Adds details the system reports after the exchange was recorded (metrics of a redirect hop).
     func withConnectionDetails(tls: CWTLSInfo?, timing: CWTiming?) -> CWTransaction {
-        copy(tls: tls ?? self.tls, timing: timing ?? self.timing)
+        copy(tls: .some(tls ?? self.tls), timing: .some(timing ?? self.timing))
     }
 
     private func finished(

@@ -101,8 +101,12 @@ final class CWCaptureEngine: Sendable {
         if !wasRunning {
             URLProtocol.registerClass(CWURLProtocol.self)
         }
+        CWSessionConfigurationSwizzle.setInjecting(configuration.interceptCustomSessions)
         if configuration.interceptCustomSessions {
             CWSessionConfigurationSwizzle.install()
+        }
+        if !CWBootstrap.didRunAtLoad, CWBootstrap.isEarlyInstallEnabled {
+            Self.logger.warning("Load-time bootstrap did not run; sessions created before start are not captured.")
         }
         let triggers = configuration.triggers
         Task { @MainActor in CWPresenter.shared.configure(triggers: triggers) }

@@ -24,11 +24,17 @@ class ProductsViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
 
+    private let session: URLSession
+
+    init(session: URLSession = .shared) {
+        self.session = session
+    }
+
     func fetchProducts() {
         isLoading = true
         errorMessage = nil
         let url = URL(string: "https://dummyjson.com/products")!
-        URLSession.shared.dataTask(with: url) { data, response, error in
+        session.dataTask(with: url) { data, response, error in
             DispatchQueue.main.async {
                 if let error = error {
                     self.errorMessage = error.localizedDescription
@@ -53,9 +59,13 @@ class ProductsViewModel: ObservableObject {
 }
 
 struct ContentView: View {
-    @ObservedObject private var viewModel: ProductsViewModel = ProductsViewModel()
+    @StateObject private var viewModel: ProductsViewModel
     @State private var didAppear = false
     @State private var showsInspector = false
+
+    init(session: URLSession = .shared) {
+        _viewModel = StateObject(wrappedValue: ProductsViewModel(session: session))
+    }
 
     var body: some View {
         Group {

@@ -28,6 +28,18 @@ enum CWSessionConfigurationSwizzle {
         _ = installation
     }
 
+    /// `true` until `start` applies `interceptCustomSessions`, so sessions created before
+    /// `start` (after the load-time bootstrap) are injected too.
+    private static let injection = CWLocked(true)
+
+    static var isInjecting: Bool {
+        injection.withLock { $0 }
+    }
+
+    static func setInjecting(_ isInjecting: Bool) {
+        injection.withLock { $0 = isInjecting }
+    }
+
     private static func exchange(_ original: Selector, with replacement: Selector) {
         let type: AnyClass = URLSessionConfiguration.self
         guard
@@ -45,11 +57,13 @@ extension URLSessionConfiguration {
 
     /// After the exchange, `cw_default` runs the original `default` getter.
     @objc dynamic class var cw_default: URLSessionConfiguration {
-        self.cw_default.insertingCatWalkProtocol()
+        let configuration = self.cw_default
+        return CWSessionConfigurationSwizzle.isInjecting ? configuration.insertingCatWalkProtocol() : configuration
     }
 
     @objc dynamic class var cw_ephemeral: URLSessionConfiguration {
-        self.cw_ephemeral.insertingCatWalkProtocol()
+        let configuration = self.cw_ephemeral
+        return CWSessionConfigurationSwizzle.isInjecting ? configuration.insertingCatWalkProtocol() : configuration
     }
 
     /// Each getter call returns a fresh configuration, so this edits only that new copy.

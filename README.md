@@ -154,22 +154,28 @@ Use `CWConfiguration(isEnabled:)` or `CatWalk.setEnabled(_:)` as a runtime kill 
 
 ## Limitations
 
-Background sessions (`URLSessionConfiguration.background`) bypass `URLProtocol`, so CatWalk observes them from
-the session delegate instead. Their rows carry a **BG** chip, appear only once the transfer finishes, and can't
-be mocked. Download bodies are read from the file before your delegate receives it; upload bodies come from the
-file passed to `uploadTask(with:fromFile:)`.
+What each source captures, and what it can't:
 
-WebSocket tasks don't go through `URLProtocol` either; CatWalk hooks the task's runtime class to record the
-handshake, sent and received messages (text, binary, ping/pong) and the close code. Rows carry a **WS** chip
-and can't be mocked. HAR export includes the messages in Chrome's `_webSocketMessages` format. If the peer
-closes the connection while the app has no `receive()` pending, the row stays open until the app's next call.
+| Source | Chip | Captured | Not captured |
+|---|---|---|---|
+| `URLSession` (shared, custom, Alamofire) | | Requests, bodies, redirects, timing, TLS; mockable and replayable | Requests already running when `CatWalk.start` is called; sessions whose `protocolClasses` the app sets itself |
+| Background sessions | BG | Request, response, timing and TLS once the transfer finishes; download and upload bodies | Mocking; rows appear only after the transfer |
+| `URLSessionWebSocketTask` | WS | Handshake, every message (text, binary, ping/pong), close code | Mocking; a peer close shows when the app next calls `receive()` |
+| `WKWebView` | WEB | `fetch` and XHR calls with text bodies, for instrumented web views | Images, styles, scripts, page loads, service workers, cookies; use Safari Web Inspector for those |
+| `AVPlayer` | MEDIA | iOS 18+: playlist, segment and key requests with timing; before iOS 18: per-URI playback and error logs | Headers, bodies, mocking; players created before `start` |
 
-CatWalk does not see:
+Background sessions bypass `URLProtocol`, so CatWalk observes them from the session delegate. Download bodies
+are read from the file before your delegate receives it; upload bodies come from the file passed to
+`uploadTask(with:fromFile:)`. WebSocket tasks are observed by hooking the task's runtime class, and HAR export
+includes their messages in Chrome's `_webSocketMessages` format.
 
-- `AVPlayer` request and response headers and bodies (see [Media](#media))
-- `WKWebView` traffic other than `fetch`/XHR of instrumented web views (see [Web views](#web-views))
-- Network.framework (`NWConnection`) and libraries built on it, such as Starscream's native engine
-- requests already running when `CatWalk.start` is called, and sessions whose `protocolClasses` the app sets itself
+Out of reach:
+
+- Network.framework (`NWConnection`) and libraries built on it, such as Starscream's native engine or gRPC-Swift
+- Traffic of other processes: app extensions, widgets, WebContent subresources, push
+
+Use the **Source** menu in the filter bar to show one kind of traffic. Settings has switches for WebSockets,
+AVPlayer media and web views, and shows whether the load-time install ran.
 
 ## Development
 

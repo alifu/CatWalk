@@ -15,6 +15,7 @@ struct CWSettingsView: View {
     @State private var hosts = CatWalk.ignoredHosts
     @State private var newHost = ""
     @State private var errorMessage: String?
+    @State private var options = CWCaptureEngine.shared.recorder.configuration
 
     var body: some View {
         Form {
@@ -23,6 +24,14 @@ struct CWSettingsView: View {
                     get: { isCapturing },
                     set: { CWCaptureEngine.shared.setCapturing($0); isCapturing = CatWalk.isRunning }
                 ))
+            }
+            Section("Sources") {
+                optionToggle("WebSockets", \.captureWebSockets)
+                optionToggle("AVPlayer media", \.captureMedia)
+                optionToggle("Instrument new web views", \.instrumentWebViews)
+                optionToggle("Inspectable web views", \.makeWebViewsInspectable)
+                row("Early install", CWBootstrap.didRunAtLoad ? "Active" : (CWBootstrap.isEarlyInstallEnabled ? "Did not run" : "Off"))
+                Text("Web view switches apply to web views created from now on.").font(.caption).foregroundColor(.secondary)
             }
             Section("Ignored hosts") {
                 ForEach(hosts, id: \.self) { Text($0) }
@@ -49,6 +58,16 @@ struct CWSettingsView: View {
             }
         }
         .navigationTitle("Settings")
+    }
+
+    private func optionToggle(_ title: String, _ keyPath: WritableKeyPath<CWConfiguration, Bool>) -> some View {
+        Toggle(title, isOn: Binding(
+            get: { options[keyPath: keyPath] },
+            set: { value in
+                CWCaptureEngine.shared.updateConfiguration { $0[keyPath: keyPath] = value }
+                options = CWCaptureEngine.shared.recorder.configuration
+            }
+        ))
     }
 
     private func row(_ title: String, _ value: String) -> some View {

@@ -14,6 +14,7 @@ extension CWTransaction.Source {
         case .backgroundSession: "Background sessions"
         case .webSocket: "WebSockets"
         case .webView: "Web views"
+        case .media: "Media"
         }
     }
 
@@ -24,6 +25,7 @@ extension CWTransaction.Source {
         case .backgroundSession: "BG"
         case .webSocket: "WS"
         case .webView: "WEB"
+        case .media: "MEDIA"
         }
     }
 }
@@ -43,12 +45,14 @@ extension CWTransaction {
 
     var statusText: String {
         if let code = response?.statusCode { return String(code) }
-        return error != nil ? "ERR" : "…"
+        if error != nil { return "ERR" }
+        return source == .media && state == .completed ? "OK" : "…"
     }
 
     var statusDescription: String {
         if let code = response?.statusCode { return "Status \(code)" }
-        return error != nil ? "Failed" : "In progress"
+        if error != nil { return "Failed" }
+        return source == .media && state == .completed ? "Completed" : "In progress"
     }
 }
 

@@ -41,6 +41,9 @@ struct CWTransactionRow: View {
             if let size = transaction.response?.body?.totalBytes {
                 Text(CWFormat.bytes(size))
             }
+            if let bytes = transaction.media?.bytesReceived, bytes > 0 {
+                Text(CWFormat.bytes(Int(bytes)))
+            }
             if let webSocket = transaction.webSocket {
                 Text("\(webSocket.frames.count + webSocket.droppedFrameCount) msgs")
             }

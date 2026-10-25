@@ -50,6 +50,13 @@ struct CWTransactionFilterTests {
         #expect(CWTransactionFilter(source: .webSocket).apply(to: [ok, socket]).map(\.id) == [socket.id])
     }
 
+    @Test("media rows without an HTTP status count as successful when completed")
+    func mediaStatus() {
+        #expect(CWStatusClass(CWPreviewFixtures.segment) == .success)
+        #expect(CWPreviewFixtures.segment.statusText == "OK")
+        #expect(CWTransactionFilter(source: .media).apply(to: [ok, CWPreviewFixtures.segment]).map(\.id) == [CWPreviewFixtures.segment.id])
+    }
+
     @Test("method, host and hidden rows combine")
     func combined() {
         let filter = CWTransactionFilter(methods: ["GET"], host: "api.test", hiddenIDs: [ok.id])

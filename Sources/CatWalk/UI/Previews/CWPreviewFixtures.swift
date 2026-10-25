@@ -16,7 +16,9 @@ enum CWPreviewFixtures {
     static let notFound = make("GET", "https://dummyjson.com/missing", status: 404, json: #"{"message":"Not found"}"#)
     static let failed = make("GET", "https://offline.test/ping", status: nil, json: nil)
     static let socket = makeSocket()
-    static let all = [ok, created, notFound, failed, socket]
+    static let segment = makeMedia(.segment, "https://cdn.example.com/video/seg0.ts")
+    static let playbackLog = makeMedia(.playbackLog, "https://cdn.example.com/video/master.m3u8")
+    static let all = [ok, created, notFound, failed, socket, segment, playbackLog]
 
     /// A store holding `all`, for views that read from it.
     static func store() -> CWTransactionStore {
@@ -73,6 +75,22 @@ extension CWPreviewFixtures {
             .updatingWebSocket { frames.reduce($0) { $0.appending($1, maxFrames: 100) } }
         return recorder.complete(open, response: handshake, body: nil, error: nil)
             .updatingWebSocket { $0.closed(code: 1000, reason: nil) }
+    }
+
+    /// An HLS segment (iOS 18+ AVMetrics) or a playback-session total (access log, before iOS 18).
+    private static func makeMedia(_ kind: CWMediaInfo.Kind, _ url: String) -> CWTransaction {
+        let recorder = CWRecorder(configuration: .default)
+        let begun = recorder.begin(URLRequest(url: URL(string: url)!), body: nil)!
+        let playback = CWMediaInfo.Playback(
+            transferDuration: 1.8, observedBitrate: 2_400_000, indicatedBitrate: 1_800_000,
+            stallCount: 1, requestCount: 12, durationWatched: 48
+        )
+        let info = CWMediaInfo(
+            itemID: UUID(), kind: kind, mediaType: kind == .segment ? "vide" : nil,
+            byteRange: kind == .segment ? 0..<524_288 : nil, segmentDuration: kind == .segment ? 6 : nil,
+            serverAddress: "203.0.113.9", bytesReceived: 524_288, playback: kind == .playbackLog ? playback : nil
+        )
+        return recorder.complete(begun, response: nil, body: nil, error: nil, at: begun.startDate.addingTimeInterval(0.4)).asMedia(info)
     }
 
     /// DNS 20 ms, connect 60 ms (TLS 40 ms), send 5 ms, wait 120 ms, receive 30 ms.

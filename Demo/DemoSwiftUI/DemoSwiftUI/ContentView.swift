@@ -63,6 +63,7 @@ struct ContentView: View {
     @State private var didAppear = false
     @State private var showsInspector = false
     @State private var showsWebDemo = false
+    @State private var showsMediaDemo = false
 
     init(session: URLSession = .shared) {
         _viewModel = StateObject(wrappedValue: ProductsViewModel(session: session))
@@ -91,12 +92,14 @@ struct ContentView: View {
                     Button("Background download") { BackgroundDownloader.shared.download() }
                     Button("WebSocket") { WebSocketChat.shared.run() }
                     Button("Web view") { showsWebDemo = true }
+                    Button("Video (HLS)") { showsMediaDemo = true }
                 }
             }
             .buttonStyle(.borderedProminent)
             .padding()
         }
         .sheet(isPresented: $showsWebDemo) { WebDemoView() }
+        .sheet(isPresented: $showsMediaDemo) { MediaDemoView() }
         .catWalk(isPresented: $showsInspector)
         .onAppear {
             if !didAppear {

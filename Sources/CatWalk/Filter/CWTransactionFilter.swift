@@ -23,6 +23,9 @@ enum CWStatusClass: CaseIterable, Hashable, Sendable {
             }
         } else if transaction.error != nil {
             self = .failed
+        } else if transaction.source == .media, transaction.state == .completed {
+            // Media loads that report no HTTP status (cache reads, playback logs) still succeeded.
+            self = .success
         } else {
             return nil
         }

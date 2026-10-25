@@ -17,9 +17,10 @@ struct CWDetailView: View {
 
         /// WebSockets have messages instead of request/response bodies.
         static func tabs(for transaction: CWTransaction?) -> [Tab] {
-            transaction?.webSocket == nil
-                ? [.overview, .request, .response, .headers, .cookies, .ssl]
-                : [.overview, .messages, .headers, .cookies, .ssl]
+            if transaction?.webSocket != nil { return [.overview, .messages, .headers, .cookies, .ssl] }
+            // Media loads have no bodies or cookies; their fields are on Overview.
+            if transaction?.media != nil { return [.overview, .headers, .ssl] }
+            return [.overview, .request, .response, .headers, .cookies, .ssl]
         }
     }
 
@@ -82,7 +83,7 @@ struct CWDetailView: View {
             Button { shareItem = CWShareItem.har(for: [transaction]) } label: {
                 Label("Share HAR", systemImage: "square.and.arrow.up")
             }
-            if transaction.webSocket == nil {
+            if transaction.webSocket == nil, transaction.media == nil {
                 Button { replay(transaction) } label: { Label("Replay request", systemImage: "arrow.clockwise") }
             }
             if transaction.isMockable {
@@ -122,6 +123,8 @@ private struct CWOverviewTab: View {
             }
             if let webSocket = transaction.webSocket {
                 CWWebSocketSummary(log: webSocket)
+            } else if let media = transaction.media {
+                CWMediaSummary(media: media)
             } else {
                 CWKeyValueRow(name: "Request body", value: size(transaction.request.body))
                 CWKeyValueRow(name: "Response body", value: size(transaction.response?.body))

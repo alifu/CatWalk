@@ -106,6 +106,11 @@ final class CWCaptureEngine: Sendable {
         if configuration.captureWebSockets {
             CWWebSocketHook.install()
         }
+        #if canImport(AVFoundation)
+        if configuration.captureMedia {
+            CWMediaObserver.install()
+        }
+        #endif
         #if canImport(WebKit)
         if configuration.instrumentWebViews || configuration.makeWebViewsInspectable {
             CWWebViewInstrumentation.installInitializationHook()

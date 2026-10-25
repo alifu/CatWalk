@@ -19,6 +19,8 @@ public struct CWTransaction: Sendable, Identifiable, Equatable {
         case webSocket
         /// `fetch` / `XMLHttpRequest` of a page in an instrumented `WKWebView`, read-only.
         case webView
+        /// `AVPlayer` loading (HLS playlists and segments, or playback logs): read-only, no bodies.
+        case media
     }
 
     public enum State: Sendable, Equatable {
@@ -57,6 +59,9 @@ public struct CWTransaction: Sendable, Identifiable, Equatable {
 
     /// Messages of a WebSocket connection; `nil` for HTTP exchanges.
     public let webSocket: CWWebSocketLog?
+
+    /// Media fields of an `AVPlayer` request; `nil` for other sources.
+    public let media: CWMediaInfo?
 
     /// Lowercased "method url status", built once per state for O(1)-setup search.
     let searchKey: String
@@ -108,7 +113,8 @@ public struct CWTransaction: Sendable, Identifiable, Equatable {
         tls: CWTLSInfo?,
         timing: CWTiming?,
         source: Source = .urlSession,
-        webSocket: CWWebSocketLog? = nil
+        webSocket: CWWebSocketLog? = nil,
+        media: CWMediaInfo? = nil
     ) {
         self.id = id
         self.state = state
@@ -123,6 +129,7 @@ public struct CWTransaction: Sendable, Identifiable, Equatable {
         self.timing = timing
         self.source = source
         self.webSocket = webSocket
+        self.media = media
         self.searchKey = Self.makeSearchKey(request: request, response: response)
     }
 }
@@ -176,6 +183,11 @@ extension CWTransaction {
         copy(response: .some(response), responseCookies: cookies)
     }
 
+    /// Marks the exchange as an `AVPlayer` request.
+    func asMedia(_ media: CWMediaInfo) -> CWTransaction {
+        copy(source: .media, media: .some(media))
+    }
+
     /// Changes the message log; HTTP transactions are returned unchanged.
     func updatingWebSocket(_ transform: (CWWebSocketLog) -> CWWebSocketLog) -> CWTransaction {
         guard let webSocket else { return self }
@@ -204,7 +216,8 @@ extension CWTransaction {
             tls: tls,
             timing: timing,
             source: source,
-            webSocket: webSocket
+            webSocket: webSocket,
+            media: media
         )
     }
 
@@ -216,7 +229,8 @@ extension CWTransaction {
         tls: CWTLSInfo?? = nil,
         timing: CWTiming?? = nil,
         source: Source? = nil,
-        webSocket: CWWebSocketLog?? = nil
+        webSocket: CWWebSocketLog?? = nil,
+        media: CWMediaInfo?? = nil
     ) -> CWTransaction {
         CWTransaction(
             id: id,
@@ -231,7 +245,8 @@ extension CWTransaction {
             tls: tls ?? self.tls,
             timing: timing ?? self.timing,
             source: source ?? self.source,
-            webSocket: webSocket ?? self.webSocket
+            webSocket: webSocket ?? self.webSocket,
+            media: media ?? self.media
         )
     }
 }

@@ -13,6 +13,7 @@ It can also answer requests with mock responses. Everything is kept in memory an
 - Background-session transfers, observed from the session delegate (read-only)
 - WebSocket connections (`URLSessionWebSocketTask`): handshake and every message in a chat-style Messages tab
 - `WKWebView` pages: `fetch` and `XMLHttpRequest` calls with bodies (opt-in), and inspectable web views for Safari
+- `AVPlayer` media loading: HLS playlist and segment requests (iOS 18+) and playback log entries (before iOS 18)
 - Timing waterfall per request: DNS, connect, TLS, send, wait, receive
 - Filters, JSON tree, copy as cURL, HAR export (with timings), request replay
 - Compiled out of Release builds by default
@@ -75,6 +76,8 @@ CWConfiguration(
     maxFramesPerConnection: 1000,            // per WebSocket; oldest messages are dropped first
     instrumentWebViews: false,               // inject the fetch/XHR reporter into every new WKWebView
     makeWebViewsInspectable: true,           // Debug default; lets Safari Web Inspector attach (iOS 16.4+)
+    captureMedia: true,                      // observe AVPlayer media loading
+    maxMediaRequestsPerItem: 200,            // per player item; the rest are counted, not listed
     isEnabled: true                          // feed from a remote flag to switch CatWalk off
 )
 ```
@@ -100,6 +103,17 @@ be mocked. The script only observes: arguments, return values and promises reach
 Not reported: images, styles, scripts, page loads, service workers, cookies (WebKit keeps them from the page),
 and response headers that CORS hides. `makeWebViewsInspectable` (on in Debug) sets `isInspectable`, so Safari's
 Web Inspector (Develop menu on a Mac) shows all of a web view's traffic.
+
+## Media
+
+`AVPlayer` loads HLS through its own stack. On iOS 18+ CatWalk subscribes to the player's AVMetrics and lists
+each playlist, segment and key request (status, byte range, segment duration, server, cache hit, bytes received,
+timing, TLS) with a **MEDIA** chip. Before iOS 18 it lists one row per URI from the player item's access and
+error logs: bytes transferred, bitrate, stalls and failure status. Where the load already goes through a
+CatWalk-observed `URLSession`, the normal row is shown and no duplicate MEDIA row is added.
+
+Limits: no headers or bodies, no replay or mocking, `maxMediaRequestsPerItem` caps the list per item, and players
+created before `CatWalk.start` are not observed. Set `captureMedia: false` to turn it off.
 
 ## Mocking
 
@@ -152,7 +166,7 @@ closes the connection while the app has no `receive()` pending, the row stays op
 
 CatWalk does not see:
 
-- `AVPlayer` traffic
+- `AVPlayer` request and response headers and bodies (see [Media](#media))
 - `WKWebView` traffic other than `fetch`/XHR of instrumented web views (see [Web views](#web-views))
 - Network.framework (`NWConnection`) and libraries built on it, such as Starscream's native engine
 - requests already running when `CatWalk.start` is called, and sessions whose `protocolClasses` the app sets itself

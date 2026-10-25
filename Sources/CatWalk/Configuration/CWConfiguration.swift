@@ -18,6 +18,8 @@ public struct CWConfiguration: Sendable {
 
     public static let defaultMaxFramesPerConnection = 1000
 
+    public static let defaultMaxMediaRequestsPerItem = 200
+
     /// `true` in Debug builds, `false` in Release builds that keep CatWalk (`CatWalkAlwaysOn`).
     public static let defaultMakeWebViewsInspectable: Bool = {
         #if DEBUG
@@ -59,6 +61,13 @@ public struct CWConfiguration: Sendable {
     /// Messages kept per WebSocket connection; the oldest are dropped first.
     public var maxFramesPerConnection: Int
 
+    /// Record `AVPlayer` loading (HLS playlists and segments on iOS 18+, playback logs before that).
+    public var captureMedia: Bool
+
+    /// Media requests recorded per `AVPlayerItem`; later ones are dropped so a long stream can't push
+    /// the app's own requests out of the list.
+    public var maxMediaRequestsPerItem: Int
+
     /// Inject a script into every new `WKWebView` that reports page `fetch` / `XMLHttpRequest` calls.
     /// Off by default; `CatWalk.instrument(_:)` does the same for one configuration.
     public var instrumentWebViews: Bool
@@ -80,6 +89,8 @@ public struct CWConfiguration: Sendable {
         triggers: CWTrigger = [.shake],
         captureWebSockets: Bool = true,
         maxFramesPerConnection: Int = CWConfiguration.defaultMaxFramesPerConnection,
+        captureMedia: Bool = true,
+        maxMediaRequestsPerItem: Int = CWConfiguration.defaultMaxMediaRequestsPerItem,
         instrumentWebViews: Bool = false,
         makeWebViewsInspectable: Bool = CWConfiguration.defaultMakeWebViewsInspectable,
         isEnabled: Bool = true
@@ -91,6 +102,8 @@ public struct CWConfiguration: Sendable {
         self.triggers = triggers
         self.captureWebSockets = captureWebSockets
         self.maxFramesPerConnection = max(1, maxFramesPerConnection)
+        self.captureMedia = captureMedia
+        self.maxMediaRequestsPerItem = max(1, maxMediaRequestsPerItem)
         self.instrumentWebViews = instrumentWebViews
         self.makeWebViewsInspectable = makeWebViewsInspectable
         self.isEnabled = isEnabled

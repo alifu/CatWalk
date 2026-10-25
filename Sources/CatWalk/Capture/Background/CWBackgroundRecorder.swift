@@ -23,7 +23,7 @@ enum CWBackgroundRecorder {
         // Metrics after completion (rare): fill in the stored row, never erase it.
         if isRecorded, let url = task.originalRequest?.url {
             engine.store.update(id: record.id) {
-                $0.withConnectionDetails(tls: tlsInfo(for: url, connection: connection, engine: engine), timing: connection.timing)
+                $0.withConnectionDetails(tls: engine.tlsInfo(for: url, connection: connection), timing: connection.timing)
             }
         }
     }
@@ -77,7 +77,7 @@ enum CWBackgroundRecorder {
             response: task.response,
             body: snapshot.downloadedBody ?? snapshot.receivedBody,
             error: error,
-            tls: tlsInfo(for: url, connection: snapshot.metrics, engine: engine),
+            tls: engine.tlsInfo(for: url, connection: snapshot.metrics),
             timing: timing,
             at: timing?.total?.end ?? Date()
         )
@@ -96,20 +96,6 @@ enum CWBackgroundRecorder {
             receivedBody = state.receivedBody.body
             uploadFile = state.uploadFile
         }
-    }
-
-    /// No handshake is visible to CatWalk here, so the chain comes from an earlier foreground
-    /// connection to the same host, when there was one.
-    private static func tlsInfo(for url: URL, connection: CWConnectionMetrics?, engine: CWCaptureEngine) -> CWTLSInfo? {
-        guard url.scheme?.lowercased() == "https" else { return nil }
-        let chain = CWCertificateCache.key(for: url).flatMap(engine.certificates.chain(for:))
-        guard connection != nil || chain != nil else { return nil }
-        return CWTLSInfo(
-            connection: connection,
-            certificates: chain ?? [],
-            isChainFromEarlierConnection: chain != nil,
-            trustDecision: nil
-        )
     }
 
     /// First `limit` bytes plus the file size; `nil` when the file cannot be read.

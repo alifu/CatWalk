@@ -43,6 +43,8 @@ extension SharedEngine {
             layOut(NavigationView { CWDetailView(transactionID: CWPreviewFixtures.ok.id, store: store) })
             layOut(NavigationView { CWDetailView(transactionID: CWPreviewFixtures.failed.id, store: store) })
             layOut(NavigationView { CWDetailView(transactionID: CWPreviewFixtures.socket.id, store: store) })
+            layOut(NavigationView { CWDetailView(transactionID: CWPreviewFixtures.segment.id, store: store) })
+            layOut(NavigationView { CWDetailView(transactionID: CWPreviewFixtures.playbackLog.id, store: store) })
             layOut(NavigationView { ScrollView { CWWebSocketMessagesView(log: CWPreviewFixtures.socket.webSocket!) } })
             layOut(NavigationView { CWDetailView(transactionID: UUID(), store: store) })
             layOut(CWMockEditorView(draft: CWMockDraft(from: CWPreviewFixtures.notFound)))
